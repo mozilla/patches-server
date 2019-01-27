@@ -3,6 +3,8 @@ defmodule Patches.VulnStreams do
 
   use GenServer
 
+  alias Patches.StreamFn
+
   # Client
 
   def start_link([]) do
@@ -25,26 +27,15 @@ defmodule Patches.VulnStreams do
   def init(state), do: {:ok, state}
 
   def handle_call({:retrieve, id}, _from, state) do
-    case state.streams[id] do
-      {:ok, vulns, next_page} ->
-        GenServer.cast(__MODULE__, {:fetch_more, id, next_page})
-        new_state = %{state | streams: Map.put(state.streams, id, {:ok, [], next_page})}
-        {:reply, {:ok, vulns}, new_state}
-
-      {:done, vulns, _} ->
-        streams = Map.delete(state.streams, id)
-        new_state = %{state | streams: streams}
-        {:reply, {:ok, vulns}, new_state}
-
-      {:error, reason} ->
-        {:reply, {:error, reason}, state}
-
-      nil ->
-        {:reply, {:error, :invalid_id}, state}
+    if Map.has_key?(state.streams, id) do
+      drain_stream(state, id)
+    else
+      {:reply, {:error, :invalid_id}, state}
     end
   end
 
   def handle_cast({:fetch, platform}, state) when is_binary(platform) do
+    IO.puts "Fetching vulns"
     url = "#{state.base_address}/v1/namespaces/#{platform}/vulnerabilities?limit=50"
     id = generate_id(fn id -> not Map.has_key?(state.streams, id) end)
     new_state = case HTTPoison.get(url) do
@@ -52,23 +43,45 @@ defmodule Patches.VulnStreams do
         json = Poison.decode! response.body
         vulns = Map.get(json, "Vulnerabilities", [])
         next_page = Map.get(json, "NextPage", "")
-        status = if next_page == "" do
-          :done
-        else
-          :ok
-        end
-        new_stream = {status, vulns, next_page}
+        IO.puts "Got vulns"
+        IO.inspect vulns
+        IO.puts "Got next page #{next_page}"
+        new_stream = StreamFn.stream(vulns, next_page)
         %{state | streams: Map.put(state.streams, id, new_stream)}
 
       {:error, %HTTPoison.Error{reason: reason}} ->
-        %{state | streams: Map.put(state.streams, id, {:error, reason})}
+        IO.puts "Got an error from Clair"
+        new_stream = StreamFn.stream(:error, reason)
+        %{state | streams: Map.put(state.streams, id, new_stream)}
     end
 
     {:noreply, new_state}
   end
 
-  def handle_cast({:fetch_more, _id, _next_page}, state) do
-    {:noreply, state}
+  def handle_cast({:stream_step, id, stream}, state) do
+    new_state = if StreamFn.is_done?(stream) do
+      %{state | streams: Map.delete(state.streams, id)}
+    else
+      state
+    end
+
+    {:noreply, new_state}
+  end
+
+  defp drain_stream(state, id) do
+    IO.puts "Draining stream"
+    case StreamFn.drain(state.streams[id]) do
+      {:ok, vulns, new_stream} ->
+        IO.puts "Retrieving vulns"
+        IO.inspect vulns
+        GenServer.cast(__MODULE__, {:stream_step, id, new_stream})
+        new_state = %{state | streams: Map.put(state.streams, id, new_stream)}
+        {:reply, {:ok, vulns}, new_state}
+
+      {:error, reason, _stream} ->
+        IO.puts "Stream in error state"
+        {:reply, {:error, reason}, state}
+    end
   end
 
   defp generate_id(id \\ 1, unique) do
