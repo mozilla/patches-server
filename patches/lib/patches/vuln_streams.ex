@@ -4,6 +4,7 @@ defmodule Patches.VulnStreams do
   use GenServer
 
   alias Patches.StreamFn
+  alias Patches.VulnFn
 
   # Client
 
@@ -35,51 +36,74 @@ defmodule Patches.VulnStreams do
   end
 
   def handle_cast({:fetch, platform}, state) when is_binary(platform) do
-    IO.puts "Fetching vulns"
-    url = "#{state.base_address}/v1/namespaces/#{platform}/vulnerabilities?limit=50"
-    id = generate_id(fn id -> not Map.has_key?(state.streams, id) end)
-    new_state = case HTTPoison.get(url) do
-      {:ok, response} ->
-        json = Poison.decode! response.body
-        vulns = Map.get(json, "Vulnerabilities", [])
-        next_page = Map.get(json, "NextPage", "")
-        IO.puts "Got vulns"
-        IO.inspect vulns
-        IO.puts "Got next page #{next_page}"
-        new_stream = StreamFn.stream(vulns, next_page)
-        %{state | streams: Map.put(state.streams, id, new_stream)}
+    gen_id = fn -> generate_id(fn id -> not Map.has_key?(state.streams, id) end) end
+    new_stream = case vuln_summaries(state.base_address, platform, gen_id) do
+      {:ok, vulns, next_page} ->
+        StreamFn.stream(vulns, next_page)
 
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        IO.puts "Got an error from Clair"
-        new_stream = StreamFn.stream(:error, reason)
-        %{state | streams: Map.put(state.streams, id, new_stream)}
+      {:error, reason} ->
+        StreamFn.stream(:error, reason)
     end
-
+      
+    new_state = %{state | streams: Map.put(state.streams, id, new_stream)}
     {:noreply, new_state}
+  end
+
+  def handle_cast({:describe, id, stream}, state) do
+    vulns = Enum.map(stream.vulns, fn vuln ->
+    end)
   end
 
   def handle_cast({:stream_step, id, stream}, state) do
-    new_state = if StreamFn.is_done?(stream) do
-      %{state | streams: Map.delete(state.streams, id)}
-    else
-      state
+    new_state = cond do
+      StreamFn.is_done?(stream) ->
+        %{state | streams: Map.delete(state.streams, id)}
+
+      true ->
+        state
     end
 
     {:noreply, new_state}
   end
 
+  defp vuln_summaries(base_addr, platform, gen_id) do
+    url = "#{base_addr}/v1/namespaces/#{platform}/vulnerabilities?limit=50"
+    id = gen_id.()
+    case HTTPoison.get(url) do
+      {:ok, response} ->
+        json = Poison.decode!(response.body)
+        vulns = Map.get(json, "Vulnerabilities", [])
+        next_page = Map.get(json, "NextPage", "")
+        {:ok, vulns, next_page}
+
+      {:error, %HTTPoison.Error{ reason: reason }} ->
+        {:error, reason}
+    end
+  end
+
+  defp vuln_description(base_addr, platform, vuln_summary) do
+    url = "#{base_addr}/v1/#{platform}/vulnerabilities/#{vuln_summary["Name"]}?fixedIn"
+    case HTTPoison.get(url) do
+      {:ok, response} ->
+        vuln = response.body
+          |> Poison.decode!()
+          |> Map.get("Vulnerability")
+          |> VulnFn.from_json(platform)
+        {:ok, vuln}
+
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        {:error, reason}
+    end
+  end
+
   defp drain_stream(state, id) do
-    IO.puts "Draining stream"
     case StreamFn.drain(state.streams[id]) do
       {:ok, vulns, new_stream} ->
-        IO.puts "Retrieving vulns"
-        IO.inspect vulns
         GenServer.cast(__MODULE__, {:stream_step, id, new_stream})
         new_state = %{state | streams: Map.put(state.streams, id, new_stream)}
         {:reply, {:ok, vulns}, new_state}
 
       {:error, reason, _stream} ->
-        IO.puts "Stream in error state"
         {:reply, {:error, reason}, state}
     end
   end

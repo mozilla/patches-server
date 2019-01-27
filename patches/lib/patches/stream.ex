@@ -1,9 +1,24 @@
 defmodule Patches.Stream do
   @moduledoc """
   The state of a stream of vulnerabilities from Clair.
+
+  Preparing information about vulnerabilities affecting a platform requires making
+  a number of calls to Clair.
+
+  1. Request a list of summaries of information about vulnerabilities.
+  2. Request information about vulnerability 1.
+  3. Request information about vulnerability 2 and so on.
+
+  Valid states include the following:
+
+  * :summarize indicates that no vulnerability information has been fetched.
+  * :describe indicates that vulnerability summaries have been fetched.
+  * :ok indicates that complet vulnerability descriptions are ready to be served.
+  * :done indicates that the stream has completed serving vulnerabilities.
+  * :error indicates that the stream encountered an error from clair.
   """
 
-  defstruct state: :not_started, vulns: [], next_page: ""
+  defstruct state: :summarize, vulns: [], platform: "", next_page: ""
 end
 
 defmodule Patches.StreamFn do
@@ -28,14 +43,19 @@ defmodule Patches.StreamFn do
     %Stream{ state: :ok, vulns: vulns, next_page: next_page }
   end
 
-  def drain(%Stream{ state: :not_started }) do
-    IO.puts "Drain state not_started"
-    {:error, :not_started, %Stream{}}
+  def drain(s=%Stream{ state: :summarize }) do
+    IO.puts "Drain state summarize"
+    {:error, :not_ready, s}
+  end
+
+  def drain(s=%Stream{ state: :describe }) do
+    IO.puts "Drain state describe"
+    {:error, :not_ready, s}
   end
 
   def drain(s=%Stream{ state: :ok, vulns: vulns }) do
     IO.puts "Drain state ok"
-    {:ok, vulns, %Stream{ s | vulns: [] }}
+    {:ok, vulns, %Stream{ s | state: :summarize, vulns: [] }}
   end
   
   def drain(%Stream{ state: :done, vulns: vulns }) do
