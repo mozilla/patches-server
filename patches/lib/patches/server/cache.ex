@@ -1,18 +1,7 @@
 defmodule Patches.Server.Cache do
   @moduledoc """
   The cache is represented as a tree mapping platform names to a list of
-  vulnerabilities affecting that platform.  Vulnerabilities are, on
-  average, less than 256 bytes.  The cache defaults to storing no more
-  than 8000 vulnerabilities, which would occupy about 2MB of space.
-
-  ## Guarantees
-  
-  The cache guarantees that:
-
-  1. It will never exceed an optional limit to the number of vulnerabilities
-  in memory (default 8000).
-  2. All iterations through a cache of vulnerabilities will be total. I.e.,
-  all scanners will always get every vuln for their platform.
+  vulnerabilities affecting that platform.
   """
   
   @doc """
@@ -23,11 +12,31 @@ defmodule Patches.Server.Cache do
         into: %{},
         do: {pform, []}
   end
+
+  @doc """
+  Register a new vulnerability affecting a supported platform to the cache.
+  """
+  def register(cache, platform, vuln) do
+    Map.update(cache, platform, [ vuln ], fn vulns -> [ vuln | vulns ] end)
+  end
 end
 
 defmodule Patches.Server.CacheAgent do
   @moduledoc """
   `Agent` abstraction for managing a cache.
+
+  Vulnerabilities are, on average, less than 256 bytes.  The cache defaults
+  to storing no more than 8000 vulnerabilities, which would occupy about
+  2MB of space.
+
+  ## Guarantees
+  
+  The cache guarantees that:
+
+  1. It will never exceed an optional limit to the number of vulnerabilities
+  in memory (default 8000).
+  2. All iterations through a cache of vulnerabilities will be total. I.e.,
+  all scanners will always get every vuln for their platform.
   """
 
   use Agent

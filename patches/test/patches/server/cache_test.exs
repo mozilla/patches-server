@@ -13,8 +13,9 @@ defmodule Patches.Server.CacheTest do
 
   test "can register values into the cache" do
     cache = Cache.init(["platform1"])
+            |> Cache.register("platform1", :test_value)
 
-    assert Cache.register(cache, "platform1", :test_value) == :ok
+    assert Enum.count(cache["platform1"]) == 1
   end
 end
 
