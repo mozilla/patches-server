@@ -28,6 +28,11 @@ defmodule Patches.ServerTest do
     assert Srv.lookup(state, test_id) == nil
   end
 
+  @doc """
+  Given a function `func` that returns `{value, next_init}`, calls `func`
+  `n` times, first with `init`, and returns
+  `{[value1, value2, ...], last_init}`.
+  """
   defp cycle_and_collect(n, init, func, acc \\ []) do
     {collectable, next_init} = func.(init)
     if n <= 0 do
