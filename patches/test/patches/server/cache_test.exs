@@ -17,6 +17,13 @@ defmodule Patches.Server.CacheTest do
 
     assert Enum.count(cache["platform1"]) == 1
   end
+
+  test "cannot retrieve vulns for unsupported platforms" do
+    vuln = Cache.init(["platform1"])
+           |> Cache.retrieve("platform2", 0)
+
+    assert vuln == []
+  end
 end
 
 defmodule Patches.Server.CacheAgentTest do

@@ -19,6 +19,15 @@ defmodule Patches.Server.Cache do
   def register(cache, platform, vuln) do
     Map.update(cache, platform, [ vuln ], fn vulns -> [ vuln | vulns ] end)
   end
+
+  @doc """
+  Retrieve up to `limit` vulnerabilities affecting `platform` from an `offset`.
+  """
+  def retrieve(cache, platform, offset \\ 0, limit \\ 1) do
+    Map.get(cache, platform, [])
+    |> Enum.drop(offset)
+    |> Enum.take(limit)
+  end
 end
 
 defmodule Patches.Server.CacheAgent do
