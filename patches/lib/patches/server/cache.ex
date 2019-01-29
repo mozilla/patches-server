@@ -1,10 +1,5 @@
 defmodule Patches.Server.Cache do
   @moduledoc """
-  An `Agent` abstraction for a cache containing information about
-  vulnerabilities affecting particular platforms.
-
-  ## Representation
-  
   The cache is represented as a tree mapping platform names to a list of
   vulnerabilities affecting that platform.  Vulnerabilities are, on
   average, less than 256 bytes.  The cache defaults to storing no more
@@ -19,10 +14,30 @@ defmodule Patches.Server.Cache do
   2. All iterations through a cache of vulnerabilities will be total. I.e.,
   all scanners will always get every vuln for their platform.
   """
-
-  def init(platforms \\ []) do
+  
+  @doc """
+  Create a new empty cache state.
+  """
+  def init(platforms) do
     for pform <- platforms,
         into: %{},
         do: {pform, []}
+  end
+end
+
+defmodule Patches.Server.CacheAgent do
+  @moduledoc """
+  `Agent` abstraction for managing a cache.
+  """
+
+  use Agent
+
+  alias Patches.Server.Cache
+
+  @doc """
+  Start handling a cache state storing vulnerabilities for a list of platforms.
+  """
+  def start_link(platforms) do
+    Agent.start_link(fn -> Cache.init(platforms) end)
   end
 end
