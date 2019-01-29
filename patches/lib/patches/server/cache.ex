@@ -23,10 +23,10 @@ defmodule Patches.Server.Cache do
   @doc """
   Retrieve up to `limit` vulnerabilities affecting `platform` from an `offset`.
   """
-  def retrieve(cache, platform, offset \\ 0, limit \\ 1) do
+  def retrieve(cache, platform, offset \\ 0, limit \\ nil) do
     Map.get(cache, platform, [])
     |> Enum.drop(offset)
-    |> Enum.take(limit)
+    |> Enum.take(limit || 999999)
   end
 end
 

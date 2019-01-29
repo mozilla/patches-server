@@ -12,17 +12,41 @@ defmodule Patches.Server.CacheTest do
   end
 
   test "can register values into the cache" do
-    cache = Cache.init(["platform1"])
-            |> Cache.register("platform1", :test_value)
+    cache =
+      Cache.init(["platform1"])
+      |> Cache.register("platform1", :test_value)
 
     assert Enum.count(cache["platform1"]) == 1
   end
 
   test "cannot retrieve vulns for unsupported platforms" do
-    vuln = Cache.init(["platform1"])
-           |> Cache.retrieve("platform2", 0)
+    vulns =
+      Cache.init(["platform1"])
+      |> Cache.retrieve("platform2", 0)
 
-    assert vuln == []
+    assert vulns == []
+  end
+
+  test "can retrieve vulns registered to the cache but does not guarantee order" do
+    vulns =
+      Cache.init(["p1"])
+      |> Cache.register("p1", :v1)
+      |> Cache.register("p1", :v2)
+      |> Cache.retrieve("p1")
+
+    both_found =
+      case vulns do
+        [:v1, :v2] ->
+          true
+
+        [:v2, :v1] ->
+          true
+
+        _ ->
+          false
+      end
+
+    assert both_found
   end
 end
 
