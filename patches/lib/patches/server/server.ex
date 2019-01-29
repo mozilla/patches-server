@@ -1,4 +1,4 @@
-defmodule Server do
+defmodule Patches.Server do
   @moduledoc """
   The Patches Server is responsible for maintaining sessions for scanners.
   It tracks the session IDs for each active scanner and the platform on
@@ -6,7 +6,7 @@ defmodule Server do
   """
 
   @doc """
-  Create a Server.
+  Create a Patches.Server.
 
   Sessions are stored in a map whose keys are unique identifiers and whose
   values are pairs of:
