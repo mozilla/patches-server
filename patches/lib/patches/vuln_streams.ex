@@ -37,21 +37,21 @@ defmodule Patches.VulnStreams do
 
   def handle_cast({:fetch, platform}, state) when is_binary(platform) do
     gen_id = fn -> generate_id(fn id -> not Map.has_key?(state.streams, id) end) end
-    new_stream = case vuln_summaries(state.base_address, platform, gen_id) do
-      {:ok, vulns, next_page} ->
-        StreamFn.stream(vulns, next_page)
+    new_state = case vuln_summaries(state.base_address, platform, gen_id) do
+      {:ok, id, vulns, next_page} ->
+        new_stream = StreamFn.stream(vulns, next_page)
+        %{state | streams: Map.put(state.streams, id, new_stream)}
 
-      {:error, reason} ->
-        StreamFn.stream(:error, reason)
+      {:error, id, reason} ->
+        new_stream = StreamFn.stream(:error, reason)
+        %{state | streams: Map.put(state.streams, id, new_stream)}
     end
       
-    new_state = %{state | streams: Map.put(state.streams, id, new_stream)}
     {:noreply, new_state}
   end
 
   def handle_cast({:describe, id, stream}, state) do
-    vulns = Enum.map(stream.vulns, fn vuln ->
-    end)
+    {:noreply, state}
   end
 
   def handle_cast({:stream_step, id, stream}, state) do
@@ -74,10 +74,10 @@ defmodule Patches.VulnStreams do
         json = Poison.decode!(response.body)
         vulns = Map.get(json, "Vulnerabilities", [])
         next_page = Map.get(json, "NextPage", "")
-        {:ok, vulns, next_page}
+        {:ok, id, vulns, next_page}
 
       {:error, %HTTPoison.Error{ reason: reason }} ->
-        {:error, reason}
+        {:error, id, reason}
     end
   end
 
