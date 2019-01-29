@@ -6,7 +6,7 @@ defmodule Patches.ServerTest do
 
   test "creates unqiue identifiers for sessions" do
     state = Srv.new()
-    ids = cycle_and_collect(35, state, fn state -> Srv.create_session(state, "") end)
+    {ids, _state} = cycle_and_collect(35, state, fn state -> Srv.create_session(state, "") end)
 
     all_ids_unique =
       for x <- 0..34,
@@ -17,10 +17,21 @@ defmodule Patches.ServerTest do
     assert all_ids_unique 
   end
 
+  test "handles the full lifecycle of sessions" do
+    {ids, state} = cycle_and_collect(3, Srv.new(), fn state -> Srv.create_session(state, "") end)
+    [ test_id | _ids ] = ids
+
+    assert Srv.lookup(state, test_id) != nil
+
+    state = Srv.terminate_session(state, test_id)
+
+    assert Srv.lookup(state, test_id) == nil
+  end
+
   defp cycle_and_collect(n, init, func, acc \\ []) do
     {collectable, next_init} = func.(init)
     if n <= 0 do
-      Enum.reverse([ collectable | acc ])
+      {Enum.reverse([ collectable | acc ]), next_init}
     else
       cycle_and_collect(n - 1, next_init, func, [ collectable | acc ])
     end
