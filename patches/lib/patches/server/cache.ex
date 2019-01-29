@@ -19,4 +19,10 @@ defmodule Patches.Server.Cache do
   2. All iterations through a cache of vulnerabilities will be total. I.e.,
   all scanners will always get every vuln for their platform.
   """
+
+  def init(platforms \\ []) do
+    for pform <- platforms,
+        into: %{},
+        do: {pform, []}
+  end
 end
