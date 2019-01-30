@@ -1,7 +1,6 @@
 defmodule Patches.Server.Cache do
   @moduledoc """
-  A cache is represented as a tree mapping bucket names to a list of
-  corresponding values.
+  Functions for managing a structure that holds "bucketed" lists of values.
   """
   
   @doc """
