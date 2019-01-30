@@ -4,7 +4,7 @@ defmodule Patches.Server.CacheTest do
 
   alias Patches.Server.Cache
 
-  test "must be constructed with a starting list of platforms to support" do
+  test "must be constructed with a starting list of bucket names" do
     cache = Cache.init(["platform1", "platform2"])
 
     assert Map.has_key?(cache, "platform1")
@@ -19,7 +19,7 @@ defmodule Patches.Server.CacheTest do
     assert Enum.count(cache["platform1"]) == 1
   end
 
-  test "cannot retrieve vulns for unsupported platforms" do
+  test "cannot retrieve values from buckets that do not exist" do
     vulns =
       Cache.init(["platform1"])
       |> Cache.retrieve("platform2", 0)
@@ -27,7 +27,7 @@ defmodule Patches.Server.CacheTest do
     assert vulns == []
   end
 
-  test "can retrieve vulns registered to the cache but does not guarantee order" do
+  test "can retrieve values registered to the cache but does not guarantee order" do
     vulns =
       Cache.init(["p1"])
       |> Cache.register("p1", :v1)
@@ -49,7 +49,7 @@ defmodule Patches.Server.CacheTest do
     assert both_found
   end
 
-  test "can sort lists of vulnerabilities in a cache" do
+  test "can sort lists of values in a cache" do
     vulns =
       Cache.init(["p1"])
       |> Cache.register("p1", 9)
