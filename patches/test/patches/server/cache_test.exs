@@ -48,6 +48,20 @@ defmodule Patches.Server.CacheTest do
 
     assert both_found
   end
+
+  test "can sort lists of vulnerabilities in a cache" do
+    vulns =
+      Cache.init(["p1"])
+      |> Cache.register("p1", 9)
+      |> Cache.register("p1", 2)
+      |> Cache.register("p1", 8)
+      |> Cache.register("p1", 3)
+      |> Cache.register("p1", 1)
+      |> Cache.sort_by(fn x -> x end)
+      |> Cache.retrieve("p1")
+
+    assert vulns == [1, 2, 3, 8, 9]
+  end
 end
 
 defmodule Patches.Server.CacheAgentTest do

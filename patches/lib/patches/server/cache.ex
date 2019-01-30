@@ -22,11 +22,25 @@ defmodule Patches.Server.Cache do
 
   @doc """
   Retrieve up to `limit` vulnerabilities affecting `platform` from an `offset`.
+
+  The default behavior is to read all vulnerabilities from the provided offset
+  or the start of the cache if no offset is provided.
   """
   def retrieve(cache, platform, offset \\ 0, limit \\ nil) do
     Map.get(cache, platform, [])
     |> Enum.drop(offset)
-    |> Enum.take(limit || 999999)
+    |> Enum.take(limit || 0xffffff)
+  end
+
+  @doc """
+  Apply a sort function to each of the lists of vulnerabilities cached for each
+  supported platform.
+  """
+  def sort_by(cache, func) do
+    for key <- Map.keys(cache),
+        sorted_vulns = Enum.sort_by(cache[key], func),
+        into: %{},
+        do: {key, sorted_vulns}
   end
 end
 
