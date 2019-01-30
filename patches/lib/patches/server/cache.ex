@@ -54,6 +54,15 @@ defmodule Patches.Server.Cache do
         into: %{},
         do: {key, Enum.take(vulns, to_keep)}
   end
+
+  @doc """
+  Compute a map from supported platforms to their corresponding cache size.
+  """
+  def sizes(cache) do
+    for key <- Map.keys(cache),
+        into: %{},
+        do: {key, Enum.count(cache[key])}
+  end
 end
 
 defmodule Patches.Server.CacheAgent do

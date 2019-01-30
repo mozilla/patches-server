@@ -113,6 +113,25 @@ defmodule Patches.Server.CacheTest do
     assert p2 == [1]
     assert p3 == [7]
   end
+
+  test "can get the sizes of each cache to make sizing decisions about" do
+    %{"p1" => p1, "p2" => p2, "p3" => p3} =
+      Cache.init(["p1", "p2", "p3"])
+      |> Cache.register("p1", 9)
+      |> Cache.register("p1", 2)
+      |> Cache.register("p1", 8)
+      |> Cache.register("p1", 3)
+      |> Cache.register("p2", 0)
+      |> Cache.register("p2", 1)
+      |> Cache.register("p3", 5)
+      |> Cache.register("p3", 4)
+      |> Cache.register("p3", 7)
+      |> Cache.sizes
+
+    assert p1 == 4
+    assert p2 == 2
+    assert p3 == 3
+  end
 end
 
 defmodule Patches.Server.CacheAgentTest do
