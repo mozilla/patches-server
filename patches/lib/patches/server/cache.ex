@@ -42,6 +42,18 @@ defmodule Patches.Server.Cache do
         into: %{},
         do: {key, sorted_vulns}
   end
+
+  @doc """
+  Apply a function to compute the desired number of vulnerabilities to be kept
+  in the cache corresponding to each platform.
+  """
+  def restrict(cache, size_fn) do
+    for key <- Map.keys(cache),
+        vulns = cache[key],
+        to_keep = size_fn.(Enum.count(vulns)),
+        into: %{},
+        do: {key, Enum.take(vulns, to_keep)}
+  end
 end
 
 defmodule Patches.Server.CacheAgent do
