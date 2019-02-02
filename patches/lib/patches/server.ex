@@ -18,7 +18,11 @@ defmodule Patches.Server.Session do
   """
 
   @enforce_keys [:platform]
-  defstruct [:platform, :window_index]
+  defstruct [
+    :platform,
+    :window_index,
+    :created_at
+  ]
 end
 
 defmodule Patches.Server do
@@ -60,7 +64,11 @@ defmodule Patches.Server do
         generate_id(fn id -> not Map.has_key?(server.queued_sessions, id) end)
 
       new_session =
-        %Patches.Server.Session{ platform: platform, window_index: 0 }
+        %Patches.Server.Session{
+          platform: platform,
+          window_index: 0,
+          created_at: Time.utc_now(),
+        }
 
       new_server =
         %{
@@ -74,6 +82,57 @@ defmodule Patches.Server do
     else
       {:error, :queue_full, server}
     end
+  end
+
+  @doc """
+  Move sessions fromm the server's `queued_sessions` collection into its
+  `active_sessions` collection.
+
+  Defaults to activating the configured `max_active_sessions` number of
+  sessions.
+  """
+  def activate_sessions(server) do
+    activate_sessions(server, server.config.max_active_sessions)
+  end
+
+  @doc """
+  Move sessions fromm the server's `queued_sessions` collection into its
+  `active_sessions` collection.
+  """
+  def activate_sessions(server, num) when is_integer(num) do
+    currently_active =
+      Enum.count(server.active_sessions)
+
+    to_take =
+      Enum.min([
+        num,
+        Enum.count(server.queued_sessions),
+        server.config.max_active_sessions - currently_active,
+      ])
+
+    sessions_by_created_at =
+      server.queued_sessions
+      |> Enum.into([])
+      |> Enum.sort_by(fn {_id, session} -> session.created_at end)
+
+    active_sessions =
+      sessions_by_created_at
+      |> Enum.take(to_take)
+      |> Enum.into(%{})
+      |> Map.merge(server.active_sessions)
+
+    queued_sessions =
+      sessions_by_created_at
+      |> Enum.drop(to_take)
+      |> Enum.into(%{})
+
+    new_server = %{
+      server |
+      active_sessions: active_sessions,
+      queued_sessions: queued_sessions,
+    }
+
+    {to_take, new_server}
   end
 
   @doc """
