@@ -88,6 +88,13 @@ defmodule Patches.Server do
   Move sessions fromm the server's `queued_sessions` collection into its
   `active_sessions` collection.
 
+  Returns
+
+      {activated, server}
+
+  with `activated` being the number of sessions that ended up being activated
+  and `server` being the new server state.
+
   Defaults to activating the configured `max_active_sessions` number of
   sessions.
   """
@@ -96,8 +103,7 @@ defmodule Patches.Server do
   end
 
   @doc """
-  Move sessions fromm the server's `queued_sessions` collection into its
-  `active_sessions` collection.
+  See `activate_sessions/1`.
   """
   def activate_sessions(server, num) when is_integer(num) do
     currently_active =
