@@ -135,6 +135,10 @@ defmodule Patches.Server do
     {to_take, new_server}
   end
 
+  def terminate_active_sessions(server) do
+    %{ server | active_sessions: %{} }
+  end
+
   @doc """
   Generate a new random hex ID of a particular length. The `unqiue` argument
   must be a predicate function that, given a generated ID, returns true if the

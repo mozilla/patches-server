@@ -96,4 +96,16 @@ defmodule Patches.ServerTest do
     assert activated.created_at < queued1.created_at
     assert activated.created_at < queued2.created_at
   end
+
+  test "can support the full session lifecycle" do
+    %{ active_sessions: active } =
+      Server.init()
+      |> Server.queue_session("ubuntu:18.04")
+      |> (fn {:ok, _id, server} -> server end).()
+      |> Server.activate_sessions(1)
+      |> (fn {_activated, server} -> server end).()
+      |> Server.terminate_active_sessions()
+
+    assert Enum.count(active) == 0
+  end
 end
