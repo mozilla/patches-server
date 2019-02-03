@@ -33,19 +33,9 @@ defmodule Patches.CacheWindow do
   end
 
   @doc """
-  Apply a function to update the underlying collection managed by the
-  `CacheWindow` as well as to compute a new start index and length for the
-  view over it.
+  Apply a function to update the underlying collection being managed.
   """
   def update(cache, update_fn) when is_function(update_fn) do
-    {new_coll, new_start, new_len} =
-      update_fn.(cache.collection, cache.start_index, cache.length)
-
-    %{
-      collection: new_coll,
-      view: Window.view(new_coll, new_start, new_len),
-      start_index: new_start,
-      length: new_len,
-    }
+    %{ cache | collection: update_fn.(cache.collection) }
   end
 end

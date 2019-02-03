@@ -21,26 +21,10 @@ defmodule Patches.CacheWindowTest do
 
     %{ collection: coll } =
       CacheWindow.init(list, 3)
-      |> CacheWindow.update(fn (collection, start, len) ->
-        new_coll =
+      |> CacheWindow.update(fn collection ->
           Enum.filter(collection, fn n -> Integer.mod(n, 2) == 0 end)
-
-        {new_coll, start, len}
       end)
 
     assert coll == [2,4,6]
-  end
-
-  test "can update the window" do
-    list =
-      [1,2,3,4,5,6,7]
-
-    %{ view: view } =
-      CacheWindow.init(list, 3)
-      |> CacheWindow.update(fn (collection, start, len) ->
-        {collection, start, len + 2}
-      end)
-
-    assert view == [1,2,3,4,5]
   end
 end
