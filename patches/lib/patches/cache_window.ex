@@ -38,4 +38,16 @@ defmodule Patches.CacheWindow do
   def update(cache, update_fn) when is_function(update_fn) do
     %{ cache | collection: update_fn.(cache.collection) }
   end
+
+  def shift_right(cache, positions) when positions >= 0 do
+    new_start =
+      cache.start_index + positions
+
+    %{
+      collection: cache.collection,
+      view: Window.view(cache.collection, new_start, cache.length),
+      start_index: new_start,
+      length: cache.length,
+    }
+  end
 end
