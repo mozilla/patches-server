@@ -9,7 +9,7 @@ defimpl Window, for: List do
   def view(collection, start_index, length) do
     collection
     |> Enum.drop(start_index)
-    |> Enum.take(length - start_index)
+    |> Enum.take(length)
   end
 end
 
