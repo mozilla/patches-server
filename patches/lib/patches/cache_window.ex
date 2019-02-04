@@ -39,6 +39,10 @@ defmodule Patches.CacheWindow do
     %{ cache | collection: update_fn.(cache.collection) }
   end
 
+  @doc """
+  Shift the window over the cache's underlying collection to the right some
+  number of indices.
+  """
   def shift_right(cache, positions) when positions >= 0 do
     new_start =
       cache.start_index + positions
