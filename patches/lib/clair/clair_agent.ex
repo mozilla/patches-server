@@ -121,4 +121,19 @@ defmodule Clair.Agent do
         nil
     end)
   end
+
+  @doc """
+  Clear any stored vulnerabilities to prepare the agent to fetch more.
+
+  The agent will remain in the error state if it is already in that state.
+  """
+  def prepare() do
+    Agent.update(__MODULE__, fn
+      s=%{ state: {:ok, _vulns} } ->
+        %{ s | state: :ready }
+
+      state ->
+        state
+    end)
+  end
 end
