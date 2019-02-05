@@ -37,7 +37,41 @@ defmodule Clair do
 
   @impl Source
   def retrieve(state) do
-    {:error, :not_implemented}
+    summaries_and_next_page =
+      fn
+        %{ "Vulnerabilities" => v, "NextPage" => p } ->
+          [v, p]
+
+        _ ->
+          [nil, nil]
+      end
+    
+    collapse_results =
+      fn
+        ({:ok, value}, {:ok, values}) ->
+          {:ok, [ value | values ]}
+
+        ({:error, err}, {:ok, _values}) ->
+          {:error, err}
+
+        (_result, {:error, err}) ->
+          {:error, err}
+      end
+
+
+    all_descriptions =
+      fn sums ->
+        vulns = sums
+        |> Enum.map(fn summary -> description(state, summary["Name"]) end)
+        |> Enum.reduce(collapse_results)
+      end
+
+    with {:ok, json} <- summaries(state),
+         [sums, np] when is_string(np) <- summaries_and_next_page.(json),
+         {:ok, vulns} <- all_descriptions.(sums),
+    do
+      {:ok, vulns, %{ state | next_page: np }}
+    end
   end
 
   @doc """
