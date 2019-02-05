@@ -24,6 +24,11 @@ end
 
 defmodule Clair do
   @moduledoc """
+  A client for the Clair vulnerability database's API.
+
+  !! **Warning** !!
+
+  Calls to `retrieve` involve making multiple blocking HTTP requests.
   """
 
   alias Patches.Vulnerability.Source
