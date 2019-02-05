@@ -1,3 +1,18 @@
+defmodule Clair.Http do
+  @moduledoc """
+  A behaviour to abstract an HTTP request, intended to facilitate unit testing.
+  """
+
+  @typep url :: binary()
+  @typep headers :: [{atom, binary}] | [{binary, binary}] | %{binary => binary}
+  @typep options :: Keyword.t()
+
+  @type success :: {:ok, map()} | map()
+  @type failure :: {:error, binary()}
+
+  @callback get(url, headers \\ [], options \\ []) :: success | failure
+end
+
 defmodule Clair do
   @moduledoc """
   """
@@ -11,8 +26,9 @@ defmodule Clair do
     {:error, :not_implemented}
   end
   
-  def init(base_url, platform, vulns_per_request) do
+  def init(http_client \\ HTTPoison, base_url, platform, vulns_per_request) do
     %{
+      http: http_client,
       base_url: base_url,
       platform: platform,
       to_fetch: vulns_per_request,
