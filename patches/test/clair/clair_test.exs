@@ -30,7 +30,7 @@ defmodule Clair.HttpSuccessStub do
   """
 
   @impl Clair.Http
-  def get(url, headers \\ [], options \\ []) do
+  def get(url, _headers \\ [], _options \\ []) do
     body =
       if String.contains?(url, "limit") do
         @summaries
@@ -52,7 +52,7 @@ defmodule Clair.HttpFailureStub do
   @behaviour Clair.Http
 
   @impl Clair.Http
-  def get(url, headers \\ [], options \\ []) do
+  def get(_url, _headers \\ [], _options \\ []) do
     {:error, "mock failure"}
   end
 end
@@ -72,7 +72,7 @@ defmodule Clair.HttpSucceedThenFailStub do
   """
 
   @impl Clair.Http
-  def get(url, headers \\ [], options \\ []) do
+  def get(url, _headers \\ [], _options \\ []) do
     if String.contains?(url, "limit") do
       {:ok, %{
         status_code: 200,
@@ -88,7 +88,7 @@ defmodule Clair.HttpInternalServerErrorStub do
   @behaviour Clair.Http
 
   @impl Clair.Http
-  def get(url, headers \\ [], options \\ []) do
+  def get(_url, _headers \\ [], _options \\ []) do
     {:ok, %{ status_code: 500 }}
   end
 end
@@ -97,7 +97,7 @@ defmodule Clair.HttpInvalidJSONStub do
   @behaviour Clair.Http
 
   @impl Clair.Http
-  def get(url, headers \\ [], options \\ []) do
+  def get(_url, _headers \\ [], _options \\ []) do
     {:ok, %{ status_code: 200, body: "No server response." }}
   end
 end
@@ -106,7 +106,7 @@ defmodule Clair.HttpUnexpectedDataStub do
   @behaviour Clair.Http
 
   @impl Clair.Http
-  def get(url, headers \\ [], options \\ []) do
+  def get(_url, _headers \\ [], _options \\ []) do
     body =
       "{\"notExpected\": 0}"
 
@@ -120,7 +120,7 @@ defmodule ClairTest do
 
   test "retrieves descriptions for all vulnerabilities served" do
     {:ok, vulns, _config} =
-      Clair.init("test", "ubuntu:18.04", 32, clair.HttpSuccessStub)
+      Clair.init("test", "ubuntu:18.04", 32, Clair.HttpSuccessStub)
       |> Clair.retrieve()
 
     assert Enum.count(vulns) == 2
@@ -128,31 +128,31 @@ defmodule ClairTest do
 
   test "returns any error it encounters making requests to clair" do
     {:error, _msg} =
-      Clair.init("test", "ubuntu:18.04", 32, clair.HttpFailureStub)
+      Clair.init("test", "ubuntu:18.04", 32, Clair.HttpFailureStub)
       |> Clair.retrieve()
   end
 
   test "returns the first error it encounters" do
     {:error, _msg} =
-      Clair.init("test", "ubuntu:18.04", 32, clair.HttpSucceedThenFailStub)
+      Clair.init("test", "ubuntu:18.04", 32, Clair.HttpSucceedThenFailStub)
       |> Clair.retrieve()
   end
 
   test "returns an error if the server indicates a request failure" do
     {:error, _msg} =
-      Clair.init("test", "ubuntu:18.04", 32, clair.HttpInternalServerErrorStub)
+      Clair.init("test", "ubuntu:18.04", 32, Clair.HttpInternalServerErrorStub)
       |> Clair.retrieve()
   end
 
   test "returns an error if it doesn't receive well-formed JSON" do
     {:error, _msg} =
-      Clair.init("test", "ubuntu:18.04", 32, clair.HttpInvalidJSONStub)
+      Clair.init("test", "ubuntu:18.04", 32, Clair.HttpInvalidJSONStub)
       |> Clair.retrieve()
   end
 
   test "returns an error if it doesn't receive expected data" do
     {:error, _msg} =
-      Clair.init("test", "ubuntu:18.04", 32, clair.HttpUnexpectedDataStub)
+      Clair.init("test", "ubuntu:18.04", 32, Clair.HttpUnexpectedDataStub)
       |> Clair.retrieve()
   end
 end

@@ -5,7 +5,7 @@ defmodule Clair.Agent do
 
   use Agent
 
-  alias Patches.Vulnerability. as: Vuln
+  alias Patches.Vulnerability, as: Vuln
 
   @doc """
   Start a link to an `Agent` containing a `Clair` configuration.

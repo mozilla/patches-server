@@ -8,7 +8,7 @@ defmodule Patches.Server.Config do
     max_active_sessions: 128,
     max_queued_sessions: 1024,
     active_session_timeout_seconds: 10 * 60,
-    queued_session_timeout_seconds: 5 * 60, 
+    queued_session_timeout_seconds: 5 * 60
   )
 end
 

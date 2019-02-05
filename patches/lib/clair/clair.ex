@@ -10,7 +10,7 @@ defmodule Clair.Http do
   @type success :: {:ok, map()} | map()
   @type failure :: {:error, binary()}
 
-  @callback get(url, headers \\ [], options \\ []) :: success | failure
+  @callback get(url, headers, options) :: success | failure
 end
 
 defmodule HTTP do
