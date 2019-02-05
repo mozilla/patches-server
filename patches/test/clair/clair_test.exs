@@ -114,6 +114,18 @@ defmodule Clair.HttpUnexpectedDataStub do
   end
 end
 
+defmodule Clair.HttpAPIErrorStub do
+  @behaviour Clair.Http
+
+  @impl Clair.Http
+  def get(_url, _headers \\ [], _options \\ []) do
+    body =
+      "{\"Error\": \"Error from Clair\"}"
+
+    {:ok, %{ status_code: 418, body: body }}
+  end
+end
+
 defmodule ClairTest do
   use ExUnit.Case
   doctest Clair
@@ -153,6 +165,12 @@ defmodule ClairTest do
   test "returns an error if it doesn't receive expected data" do
     {:error, _msg} =
       Clair.init("test", "ubuntu:18.04", 32, Clair.HttpUnexpectedDataStub)
+      |> Clair.retrieve()
+  end
+
+  test "returns an eror from the Clair API itself" do
+    {:error, "Error from Clair"} =
+      Clair.init("test", "ubuntu:18.04", 32, Clair.HttpAPIErrorStub)
       |> Clair.retrieve()
   end
 end
