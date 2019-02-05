@@ -9,13 +9,18 @@ defmodule Clair.Agent do
 
   @doc """
   Start a link to an `Agent` containing a `Clair` configuration.
+
+  ## States
+  
+  1. `:not_ready` indicates that no vulnerabilities are available yet.
+  2. `{:error, reason}` indicates that an error has been encountered.
+  3. `{:ok, vulns}` indicates that vulnerabilities are available.
   """
   def start_link(clair_config) do
     init =
       %{
         config: clair_config,
         state: :not_ready,
-        vulns: [],
       }
 
     Agent.start_link(fn -> init end, name: __MODULE__)
@@ -26,7 +31,7 @@ defmodule Clair.Agent do
   """
   def has_vulns?() do
     Agent.get(__MODULE__, fn
-      %{ state: :ready } ->
+      %{ state: {:ok, _vulns} } ->
         true
 
       _ ->
