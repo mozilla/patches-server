@@ -1,21 +1,25 @@
 defmodule Clair.HttpSuccessStub do
   @behaviour Clair.Http
 
-  @summaries %{
+  @summaries """
+  {
     "Name" => "testvuln",
   }
+  """
 
-  @description %{
-    "Name" => "testvuln",
-    "Link" => "http://nowhe.re",
-    "Severity" => "High",
-    "FixedIn" => [
+  @description """
+  {
+    "Name": "testvuln",
+    "Link": "http://nowhe.re",
+    "Severity": "High",
+    "FixedIn": [
       %{
-        "Name" => "thatonepackage",
-        "Version" => "thelatestone",
+        "Name": "thatonepackage",
+        "Version": "thelatestone",
       },
     ],
   }
+  """
 
   @impl Clair.Http
   def get(url, headers \\ [], options \\ []) do
