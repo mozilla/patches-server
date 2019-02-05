@@ -5,7 +5,10 @@ defmodule Clair.HttpSuccessStub do
   {
     "Vulnerabilities": [
       {
-        "Name": "testvuln",
+        "Name": "testvuln"
+      },
+      {
+        "Name": "testvuln2"
       }
     ],
     "NextPage": "testpage"
