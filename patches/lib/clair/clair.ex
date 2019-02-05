@@ -61,7 +61,6 @@ defmodule Clair do
           {:error, err}
       end
 
-
     all_descriptions =
       fn sums ->
         sums
@@ -125,6 +124,10 @@ defmodule Clair do
     |> summary_url()
     |> client.get()
     |> try_decode_json()
+  end
+
+  defp description(_config, nil) do
+    {:error, "Missing expected data"}
   end
 
   defp description(config = %{ http: client }, vuln_name) do
