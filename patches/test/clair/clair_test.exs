@@ -89,16 +89,22 @@ defmodule ClairTest do
   doctest Clair
 
   test "retrieves descriptions for all vulnerabilities served" do
-    {:ok, vulns} =
+    {:ok, vulns, _config} =
       Clair.init("test", "ubuntu:18.04", 32, clair.HttpSuccessStub)
       |> Clair.retrieve()
 
-    assert Enum.count(vulns) == 1
+    assert Enum.count(vulns) == 2
   end
 
   test "returns any error it encounters making requests to clair" do
+    {:error, _msg} =
+      Clair.init("test", "ubuntu:18.04", 32, clair.HttpFailureStub)
+      |> Clair.retrieve()
   end
 
   test "returns the first error it encounters" do
+    {:error, _msg} =
+      Clair.init("test", "ubuntu:18.04", 32, clair.HttpSucceedThenFailStub)
+      |> Clair.retrieve()
   end
 end
