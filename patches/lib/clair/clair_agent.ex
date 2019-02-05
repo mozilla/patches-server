@@ -1,3 +1,10 @@
+defimpl Window, for: Clair.Agent do
+  def view(agent_pid, start_index, length) do
+    Clair.Agent.vulnerabilities(agent_pid)
+    |> Window.view(start_index, length)
+  end
+end
+
 defmodule Clair.Agent do
   @moduledoc """
   An asynchronous interface to a Clair-backed vulnerability source.
@@ -40,14 +47,14 @@ defmodule Clair.Agent do
         state: :ready,
       }
 
-    Agent.start_link(fn -> init end, name: __MODULE__)
+    Agent.start_link(fn -> init end)
   end
 
   @doc """
   Determine if the agent has prepared vulnerabilities to serve.
   """
-  def has_vulns?() do
-    Agent.get(__MODULE__, fn
+  def has_vulns?(agent_pid) when is_pid(agent_pid) do
+    Agent.get(agent_pid, fn
       %{ state: {:ok, _vulns} } ->
         true
 
@@ -59,8 +66,8 @@ defmodule Clair.Agent do
   @doc """
   Determine if the agent is in the error state.
   """
-  def has_error?() do
-    Agent.get(__MODULE__, fn
+  def has_error?(agent_pid) when is_pid(agent_pid) do
+    Agent.get(agent_pid, fn
       %{ state: {:error, _reason} } ->
         true
 
@@ -73,8 +80,8 @@ defmodule Clair.Agent do
   Asynchronously request more vulnerabilities. Invoke a callback function with
   arity 0 once requests are complete.
   """
-  def fetch(callback) when is_function(callback) do
-    Agent.update(__MODULE__, fn
+  def fetch(agent_pid, callback) when is_function(callback) and is_pid(agent_pid) do
+    Agent.update(agent_pid, fn
       s=%{ config: state, state: :ready } ->
         case Clair.retrieve(state) do
           {:ok, vulns, new_state} ->
@@ -97,9 +104,9 @@ defmodule Clair.Agent do
 
   If the agent is not in the ok state, an empty list is returned.
   """
-  def vulnerabilities() do
-    Agent.get(__MODULE__, fn
-      s=%{ state: {:ok, vulns} } ->
+  def vulnerabilities(agent_pid) when is_pid(agent_pid) do
+    Agent.get(agent_pid, fn
+      %{ state: {:ok, vulns} } ->
         vulns
 
       _ ->
@@ -112,8 +119,8 @@ defmodule Clair.Agent do
 
   If the agent is not in the error state, `nil` is returned.
   """
-  def error() do
-    Agent.get(__MODULE__, fn
+  def error(agent_pid) when is_pid(agent_pid) do
+    Agent.get(agent_pid, fn
       %{ state: {:error, reason} } ->
         reason
 
@@ -127,8 +134,8 @@ defmodule Clair.Agent do
 
   The agent will remain in the error state if it is already in that state.
   """
-  def prepare() do
-    Agent.update(__MODULE__, fn
+  def prepare(agent_pid) when is_pid(agent_pid) do
+    Agent.update(agent_pid, fn
       s=%{ state: {:ok, _vulns} } ->
         %{ s | state: :ready }
 

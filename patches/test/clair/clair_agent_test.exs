@@ -15,28 +15,28 @@ defmodule Clair.AgentTest do
     }
   end
 
-  test "asserts that no vulns are loaded upon initialization" do
-    assert not Clair.Agent.has_vulns?()
+  test "asserts that no vulns are loaded upon initialization", %{ pid: pid } do
+    assert not Clair.Agent.has_vulns?(pid)
   end
 
-  test "vulnerabilities can be fetched asynchronously" do
+  test "vulnerabilities can be fetched asynchronously", %{ pid: pid } do
     me =
       self()
 
-    Clair.Agent.fetch(fn -> send(me, :ready) end)
+    Clair.Agent.fetch(pid, fn -> send(me, :ready) end)
 
     receive do
       :ready ->
-        assert Clair.Agent.has_vulns?()
+        assert Clair.Agent.has_vulns?(pid)
 
       _ ->
         assert false
     end
 
-    assert Enum.count(Clair.Agent.vulnerabilities()) == 2
+    assert Enum.count(Clair.Agent.vulnerabilities(pid)) == 2
   end
 
-  test "no vulnerabilities present before fetching" do
-    assert Enum.count(Clair.Agent.vulnerabilities()) == 0
+  test "no vulnerabilities present before fetching", %{ pid: pid } do
+    assert Enum.count(Clair.Agent.vulnerabilities(pid)) == 0
   end
 end
