@@ -42,8 +42,11 @@ defmodule Clair do
         %{ "Vulnerabilities" => v, "NextPage" => p } ->
           [v, p]
 
+        %{ "Error" => err } ->
+          {:error, err}
+
         _ ->
-          [nil, nil]
+          {:error, "Missing expected data"}
       end
     
     collapse_results =
@@ -63,7 +66,7 @@ defmodule Clair do
       fn sums ->
         sums
         |> Enum.map(fn summary -> description(state, summary["Name"]) end)
-        |> Enum.reduce(collapse_results)
+        |> Enum.reduce({:ok, []}, collapse_results)
       end
 
     with {:ok, json} <- summaries(state),
@@ -135,9 +138,16 @@ defmodule Clair do
     try do
       {:ok, Poison.decode!(body)}
     rescue
+      Poison.ParseError ->
+        {:error, "JSON decode error"}
+
       Poison.DecodeError ->
-        {:error, "Decode error"}
+        {:error, "JSON decode error"}
     end
+  end
+
+  defp try_decode_json({:ok, %{ status_code: 500 }}) do
+    {:error, "Internal server error"}
   end
 
   defp try_decode_json({:error, reason}) do

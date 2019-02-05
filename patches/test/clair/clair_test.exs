@@ -168,7 +168,7 @@ defmodule ClairTest do
       |> Clair.retrieve()
   end
 
-  test "returns an eror from the Clair API itself" do
+  test "returns an error from the Clair API itself" do
     {:error, "Error from Clair"} =
       Clair.init("test", "ubuntu:18.04", 32, Clair.HttpAPIErrorStub)
       |> Clair.retrieve()
