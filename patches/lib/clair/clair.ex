@@ -61,14 +61,14 @@ defmodule Clair do
 
     all_descriptions =
       fn sums ->
-        vulns = sums
+        sums
         |> Enum.map(fn summary -> description(state, summary["Name"]) end)
         |> Enum.reduce(collapse_results)
       end
 
     with {:ok, json} <- summaries(state),
-         [sums, np] when is_string(np) <- summaries_and_next_page.(json),
-         {:ok, vulns} <- all_descriptions.(sums),
+         [sums, np] when is_binary(np) <- summaries_and_next_page.(json),
+         {:ok, vulns} <- all_descriptions.(sums)
     do
       {:ok, vulns, %{ state | next_page: np }}
     end
