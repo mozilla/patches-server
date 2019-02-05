@@ -13,6 +13,15 @@ defmodule Clair.Http do
   @callback get(url, headers \\ [], options \\ []) :: success | failure
 end
 
+defmodule HTTP do
+  @behaviour Clair.Http
+
+  @impl Clair.Http
+  def get(url, headers \\ [], options \\ []) do
+    HTTPoison.get(url, headers, options)
+  end
+end
+
 defmodule Clair do
   @moduledoc """
   """
@@ -35,9 +44,9 @@ defmodule Clair do
   `"http://127.0.0.1:6060"`
   2. The name of a supported platform, such as `"ubuntu:18.04"`.
   3. (default 32) A maximum number of vulnerabilities to fetch per request.
-  4. (default HTTPoison) - An implementation of the `Clair.Http` behaviour.
+  4. (default HTTP) - An implementation of the `Clair.Http` behaviour.
   """
-  def init(base_url, platform, vulns_per_request \\ 32, http_client \\ HTTPoison) do
+  def init(base_url, platform, vulns_per_request \\ 32, http_client \\ HTTP) do
     %{
       http: http_client,
       base_url: base_url,
