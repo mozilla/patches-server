@@ -85,9 +85,9 @@ defmodule Clair do
   3. (default 32) A maximum number of vulnerabilities to fetch per request.
   4. (default HTTP) - An implementation of the `Clair.Http` behaviour.
   """
-  def init(base_url, platform, vulns_per_request \\ 32, http_client \\ HTTP) do
+  def init(base_url, platform, vulns_per_request \\ 32, http \\ HTTP) do
     %{
-      http: http_client,
+      http: http,
       base_url: base_url,
       platform: platform,
       to_fetch: vulns_per_request,
@@ -117,14 +117,14 @@ defmodule Clair do
     "#{base}/v1/namespaces/#{pform}/vulnerabilities/#{vuln_name}?fixedIn"
   end
 
-  defp summaries(config = %{ http_client: client }) do
+  defp summaries(config = %{ http: client }) do
     config
     |> summary_url()
     |> client.get()
     |> try_decode_json()
   end
 
-  defp description(config = %{ http_client: client }, vuln_name) do
+  defp description(config = %{ http: client }, vuln_name) do
     config
     |> description_url(vuln_name)
     |> client.get()
