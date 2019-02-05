@@ -25,8 +25,19 @@ defmodule Clair do
   def retrieve(state) do
     {:error, :not_implemented}
   end
+
+  @doc """
+  Initialize a configuraion for the Clair vulnerability source.
+
+  ## Arguments:
   
-  def init(http_client \\ HTTPoison, base_url, platform, vulns_per_request) do
+  1. A URL for a server hosting the Clair API at "/", such as
+  `"http://127.0.0.1:6060"`
+  2. The name of a supported platform, such as `"ubuntu:18.04"`.
+  3. (default 32) A maximum number of vulnerabilities to fetch per request.
+  4. (default HTTPoison) - An implementation of the `Clair.Http` behaviour.
+  """
+  def init(base_url, platform, vulns_per_request \\ 32, http_client \\ HTTPoison) do
     %{
       http: http_client,
       base_url: base_url,
