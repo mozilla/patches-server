@@ -11,6 +11,26 @@ defmodule Clair.Agent do
   Start a link to an `Agent` containing a `Clair` configuration.
   """
   def start_link(clair_config) do
-    Agent.start_link(fn -> clair_config end, name: __MODULE__)
+    init =
+      %{
+        config: clair_config,
+        state: :not_ready,
+        vulns: [],
+      }
+
+    Agent.start_link(fn -> init end, name: __MODULE__)
+  end
+
+  @doc """
+  Determine if the agent has prepared vulnerabilities to serve.
+  """
+  def has_vulns?() do
+    Agent.get(__MODULE__, fn
+      %{ state: :ready } ->
+        true
+
+      _ ->
+        false
+    end)
   end
 end

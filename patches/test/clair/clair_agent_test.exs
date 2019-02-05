@@ -14,4 +14,8 @@ defmodule Clair.AgentTest do
       pid: pid,
     }
   end
+
+  test "asserts that no vulns are loaded upon initialization" do
+    assert not Clair.Agent.has_vulns?()
+  end
 end
