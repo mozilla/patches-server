@@ -96,19 +96,14 @@ defmodule Clair.Agent do
   Retrieve a list of vulnerabilities stored by the agent.
 
   If the agent is not in the ok state, an empty list is returned.
-
-  !! **Important** !!
-
-  This function must be called in between calls to `fetch` as it resets the
-  agent state to prime it for more vulnerability requests.
   """
   def vulnerabilities() do
-    Agent.get_and_update(__MODULE__, fn
+    Agent.get(__MODULE__, fn
       s=%{ state: {:ok, vulns} } ->
-        {vulns, %{ s | state: :ready }}
+        vulns
 
-      s ->
-        {[], s}
+      _ ->
+        []
     end)
   end
 
