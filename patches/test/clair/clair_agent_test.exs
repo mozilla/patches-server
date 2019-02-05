@@ -20,7 +20,9 @@ defmodule Clair.AgentTest do
   end
 
   test "vulnerabilities can be fetched asynchronously" do
-    me = self()
+    me =
+      self()
+
     Clair.Agent.fetch(fn -> send(me, :ready) end)
 
     receive do
