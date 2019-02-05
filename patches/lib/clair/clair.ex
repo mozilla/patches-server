@@ -69,8 +69,8 @@ defmodule Clair do
         |> Enum.reduce({:ok, []}, collapse_results)
       end
 
-    with {:ok, json} <- summaries(state),
-         [sums, np] when is_binary(np) <- summaries_and_next_page.(json),
+    with {:ok, json}  <- summaries(state),
+         [sums, np]   <- summaries_and_next_page.(json),
          {:ok, vulns} <- all_descriptions.(sums)
     do
       {:ok, vulns, %{ state | next_page: np }}
