@@ -77,4 +77,31 @@ defmodule Clair do
   defp description_url(%{ base_url: base, platform: pform }, vuln_name) do
     "#{base}/v1/namespaces/#{pform}/vulnerabilities/#{vuln_name}?fixedIn"
   end
+
+  defp summaries(config = %{ http_client: client }) do
+    config
+    |> summary_url()
+    |> client.get()
+    |> try_decode_json()
+  end
+
+  defp description(config = %{ http_client: client }, vuln_name) do
+    config
+    |> description_url(vuln_name)
+    |> client.get()
+    |> try_decode_json()
+  end
+
+  defp try_decode_json({:ok, %{ body: body }}) do
+    try do
+      {:ok, Poison.decode!(body)}
+    rescue
+      Poison.DecodeError ->
+        {:error, "Decode error"}
+    end
+  end
+
+  defp try_decode_json({:error, reason}) do
+    {:error, reason}
+  end
 end
