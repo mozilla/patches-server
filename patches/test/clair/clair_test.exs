@@ -23,9 +23,9 @@ defmodule Clair.HttpSuccessStub do
     "FixedIn": [
       {
         "Name": "thatonepackage",
-        "Version": "thelatestone",
-      },
-    ],
+        "Version": "thelatestone"
+      }
+    ]
   }
   """
 
@@ -55,7 +55,7 @@ defmodule Clair.HttpFailureStub do
   {
     "Vulnerabilities": [
       {
-        "Name": "testvuln",
+        "Name": "testvuln"
       }
     ],
     "NextPage": "testpage"
@@ -89,8 +89,11 @@ defmodule ClairTest do
   doctest Clair
 
   test "retrieves descriptions for all vulnerabilities served" do
-    {:ok, vulns, Clair.init("test", "ubuntu:18.04", 32, clair.HttpSuccessStub)
-    |> Clair.retrieve()
+    {:ok, vulns} =
+      Clair.init("test", "ubuntu:18.04", 32, clair.HttpSuccessStub)
+      |> Clair.retrieve()
+
+    assert Enum.count(vulns) == 1
   end
 
   test "returns any error it encounters making requests to clair" do
