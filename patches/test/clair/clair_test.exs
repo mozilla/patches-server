@@ -3,7 +3,12 @@ defmodule Clair.HttpSuccessStub do
 
   @summaries """
   {
-    "Name" => "testvuln",
+    "Vulnerabilities": [
+      {
+        "Name": "testvuln",
+      }
+    ],
+    "NextPage": "testpage"
   }
   """
 
@@ -13,7 +18,7 @@ defmodule Clair.HttpSuccessStub do
     "Link": "http://nowhe.re",
     "Severity": "High",
     "FixedIn": [
-      %{
+      {
         "Name": "thatonepackage",
         "Version": "thelatestone",
       },
@@ -42,6 +47,17 @@ end
 
 defmodule Clair.HttpFailureStub do
   @behaviour Clair.Http
+  
+  @summaries """
+  {
+    "Vulnerabilities": [
+      {
+        "Name": "testvuln",
+      }
+    ],
+    "NextPage": "testpage"
+  }
+  """
 
   @impl Clair.Http
   def get(url, headers \\ [], options \\ []) do
@@ -49,7 +65,34 @@ defmodule Clair.HttpFailureStub do
   end
 end
 
+defmodule Clair.HttpSucceedThenFailStub do
+  @behaviour Clair.Http
+
+  @impl Clair.Http
+  def get(url, headers \\ [], options \\ []) do
+    if String.contains?(url, "limit") do
+      {:ok, %{
+        status_code: 200,
+        body: @summaries,
+      }}
+    else
+      {:error, "mock failure"}
+    end
+  end
+end
+
 defmodule ClairTest do
   use ExUnit.Case
   doctest Clair
+
+  test "retrieves descriptions for all vulnerabilities served" do
+    {:ok, vulns, Clair.init("test", "ubuntu:18.04", 32, clair.HttpSuccessStub)
+    |> Clair.retrieve()
+  end
+
+  test "returns any error it encounters making requests to clair" do
+  end
+
+  test "returns the first error it encounters" do
+  end
 end
