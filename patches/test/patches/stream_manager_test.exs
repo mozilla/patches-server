@@ -3,6 +3,7 @@ defmodule Patches.StreamManagerTest do
   doctest Patches.StreamManager
 
   alias Patches.StreamManager, as: Manager
+  alias Patches.StreamManager.Config
   alias Patches.Server.Session
 
   setup do
@@ -57,7 +58,7 @@ defmodule Patches.StreamManagerTest do
     assert Manager.retrieve("test2") == [1,2,3]
   end
 
-  test "the window only slides forward after all sessions read all data" do
+  test "the window only slides forward after all sessions read all data", %{ sessions: sessions } do
     Manager.manage(sessions, fn _platform -> [1,2,3,4,5] end)
 
     Manager.retrieve("test1")
@@ -69,7 +70,7 @@ defmodule Patches.StreamManagerTest do
     assert Manager.retrieve("test2") == [4,5]
   end
 
-  test "can query to determine whether all sessions are complete or not" do
+  test "can query to determine whether all sessions are complete or not", %{ sessions: sessions } do
     Manager.manage(sessions, fn _platform -> [1,2,3,4,5] end)
     Manager.retrieve("test1")
     Manager.retrieve("test1")
