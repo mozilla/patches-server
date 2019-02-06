@@ -20,7 +20,7 @@ defmodule Patches.Server.Session do
   @enforce_keys [:platform]
   defstruct [
     :platform,
-    :window_index,
+    :id,
     :created_at
   ]
 end
@@ -66,7 +66,7 @@ defmodule Patches.Server do
       new_session =
         %Patches.Server.Session{
           platform: platform,
-          window_index: 0,
+          id: new_session_id,
           created_at: Time.utc_now(),
         }
 
