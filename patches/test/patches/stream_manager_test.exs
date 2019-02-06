@@ -40,7 +40,7 @@ defmodule Patches.StreamManagerTest do
 
     new_sessions =
       [
-        %Session{ platform: "debian:unstable", id: "test3", created_at: TIme.utc_now() },
+        %Session{ platform: "debian:unstable", id: "test3", created_at: Time.utc_now() },
       ]
     
     Manager.manage(new_sessions, fn _platform -> [1,2,3,4,5] end)
