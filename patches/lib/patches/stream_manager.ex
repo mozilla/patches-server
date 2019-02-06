@@ -18,7 +18,7 @@ defmodule Patches.StreamManager.SessionState do
     :current_index,
     :window_length,
     :last_read_at,
-  [
+  ]
 end
 
 defmodule Patches.StreamManager do
@@ -28,6 +28,8 @@ defmodule Patches.StreamManager do
   """
 
   use Agent
+
+  alias Patches.StreamManager.SessionState
 
   @doc """
   Start and link the `StreamManager`.
@@ -49,10 +51,47 @@ defmodule Patches.StreamManager do
   ## Arguments
   
   1. `sessions` is a list of `Patches.Server.Session`.
-  2. `create_cache` is a function that, given a platform string, constructs a
+  3. `create_cache` is a function that, given a platform string, constructs a
   `Patches.CacheWindow`.
   """
   def manage(sessions, create_cache) when is_function(create_cache) do
+    Agent.update(__MODULE__, fn %{ config: cfg } ->
+      session_start_state =
+        %SessionState{
+          current_index: 0,
+          window_length: cfg.default_window_length,
+          last_read_at: Time.utc_now(),
+        }
+
+      caches =
+        Enum.reduce(sessions, %{}, fn (session, caches) ->
+          cache =
+            create_cache.(session.platform)
+
+          default_record =
+            %{
+              cache: cache,
+              sessions: %{
+                session.id => session_start_state,
+              },
+            }
+
+          add_session =
+            fn %{ cache: c, sessions: s } ->
+              %{
+                cache: c,
+                sessions: Map.put(s, session.id, session_start_state),
+              }
+            end
+
+          Map.update(caches, session.platform, default_record, add_session)
+        end)
+
+      %{
+        config: cfg,
+        caches: caches,
+      }
+    end)
   end
 
   @doc """
