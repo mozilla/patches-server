@@ -84,9 +84,15 @@ defmodule Patches.StreamManager do
           Map.update(caches, session.platform, default_record, add_session)
         end)
 
+      reverse_lookup_table =
+        for session <- sessions,
+            into: %{},
+            do: {session.id, session.platform}
+
       %{
         config: cfg,
         caches: caches,
+        scanners: reverse_lookup_table,
       }
     end)
   end
