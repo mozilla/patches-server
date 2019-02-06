@@ -65,12 +65,9 @@ defmodule Patches.StreamManager do
 
       caches =
         Enum.reduce(sessions, %{}, fn (session, caches) ->
-          cache =
-            create_cache.(session.platform)
-
           default_record =
             %{
-              cache: cache,
+              cache: create_cache.(session.platform),
               sessions: %{
                 session.id => session_start_state,
               },
