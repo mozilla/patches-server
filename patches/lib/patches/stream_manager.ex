@@ -96,6 +96,13 @@ defmodule Patches.StreamManager do
   running a scan for a particular platform.
   """
   def sessions(platform) when is_binary(platform) do
+    Agent.get(__MODULE__, fn
+      %{ caches: %{ ^platform => %{ sessions: sessions } } } ->
+        sessions
+
+      _ ->
+        []
+    end)
   end
 
   @doc """
