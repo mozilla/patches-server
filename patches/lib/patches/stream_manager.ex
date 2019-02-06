@@ -1,5 +1,17 @@
+defmodule Patches.StreamManager.Config do
+  @moduledoc """
+  Configuration for a `Patches.StreamManager`.
+  """
+
+  defstruct(
+    default_window_length: 32,
+  )
+end
+
 defmodule Patches.StreamManager.SessionState do
   @moduledoc """
+  Representation of the state of a scanner session being managed by a
+  `Patches.StreamManager`.
   """
 
   defstruct [

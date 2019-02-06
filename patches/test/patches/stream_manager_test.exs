@@ -6,8 +6,11 @@ defmodule Patches.StreamManagerTest do
   alias Patches.Server.Session
 
   setup do
+    config =
+      %Config{ default_window_length: 3 }
+
     {:ok, pid} =
-      Patches.StreamManager.start_link()
+      Patches.StreamManager.start_link(config)
     
     sessions =
       [
@@ -48,14 +51,14 @@ defmodule Patches.StreamManagerTest do
   end
 
   test "cache contents can be fetched for individual session owners", %{ sessions: sessions } do
-    Manager.manage(sessions, fn _platform -> [1,2,3,4,5] end, 3)
+    Manager.manage(sessions, fn _platform -> [1,2,3,4,5] end)
 
     assert Manager.retrieve("test1") == [1,2,3]
     assert Manager.retrieve("test2") == [1,2,3]
   end
 
   test "the window only slides forward after all sessions read all data" do
-    Manager.manage(sessions, fn _platform -> [1,2,3,4,5] end, 3)
+    Manager.manage(sessions, fn _platform -> [1,2,3,4,5] end)
 
     Manager.retrieve("test1")
     assert Manager.retrieve("test1") == []
@@ -67,7 +70,7 @@ defmodule Patches.StreamManagerTest do
   end
 
   test "can query to determine whether all sessions are complete or not" do
-    Manager.manage(sessions, fn _platform -> [1,2,3,4,5] end, 3)
+    Manager.manage(sessions, fn _platform -> [1,2,3,4,5] end)
     Manager.retrieve("test1")
     Manager.retrieve("test1")
     Manager.retrieve("test2")
