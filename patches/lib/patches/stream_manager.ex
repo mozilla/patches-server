@@ -5,6 +5,7 @@ defmodule Patches.StreamManager.Config do
 
   defstruct(
     default_window_length: 32,
+    shift_rate: 32,
   )
 end
 
@@ -30,6 +31,7 @@ defmodule Patches.StreamManager do
   use Agent
 
   alias Patches.StreamManager.SessionState
+  alias Patches.CacheWindow
 
   @doc """
   Start and link the `StreamManager`.
@@ -115,6 +117,24 @@ defmodule Patches.StreamManager do
   Retrieve data from the cache being managed for a particular scanner session.
   """
   def retrieve(session_id) when is_binary(session_id) do
+    Agent.get_and_update(__MODULE__, fn
+      state=%{ config: config, caches: caches, scanners: scanners } ->
+        with platform <- scanners[session_id],
+             platform != nil,
+             %{ cache: cache, sessions: session_states } <- caches[platform],
+             {vulns, new_cache, new_sessions} <- update(config,
+                                                        session_id,
+                                                        caches,
+                                                        platform,
+                                                        cache,
+                                                        session_states)
+        do
+          {vulns, %{ state | caches: Map.put(caches, platform, new_cache) }}
+        else
+          _ ->
+            {[], state}
+        end
+    end)
   end
 
   @doc """
@@ -122,6 +142,12 @@ defmodule Patches.StreamManager do
   `StreamManager` are complete.
   """
   def all_sessions_complete?() do
+    Agent.get(__MODULE__, fn %{ caches: caches } ->
+      caches
+      |> Map.keys()
+      |> Enum.map(fn platform -> all_sessions_complete?(platform) end)
+      |> Enum.all?()
+    end)
   end
 
   @doc """
@@ -129,5 +155,51 @@ defmodule Patches.StreamManager do
   particular platform are complete.
   """
   def all_sessions_complete?(platform) when is_binary(platform) do
+    Agent.get(__MODULE__, fn %{ caches: caches } ->
+      case caches[platform] do
+        nil ->
+          false
+
+        %{ cache: cache, session_states: sessions } ->
+          all_sessions_complete?(cache, sessions)
+      end
+    end)
+  end
+
+  defp all_sessions_complete?(%{ view: [], start_index: i }, session_states) do
+    session_states
+    |> Enum.map(fn %{ current_index: index } -> index end)
+    |> Enum.all?(fn index -> index >= i end)
+  end
+
+  defp all_sessions_complete?(_cache, _states) do
+    false
+  end
+  
+  defp update(config, session_id, caches, platform, cache, states) do
+    # 1. Use the specific session state for parameters for window read
+    # 2. Update session state's start index
+    # 3. Check if all sessions are finished now
+    # 4. If they are, shift the cache window forward
+
+    session =
+      states[session_id]
+
+    vulns =
+      Window.view(
+        cache.view,
+        session.current_index,
+        config.default_window_length)
+
+    new_states =
+      Map.update(states, session_id, fn state=%{ current_index: i } ->
+        %{ state | current_index: i + Enum.count(vulns) }
+      end)
+
+    if all_sessions_complete?(cache, new_states) do
+      {vulns, CacheWindow.shift_right(cache, config.shift_rate), new_states}
+    else
+      {vulns, cache, new_states}
+    end
   end
 end
