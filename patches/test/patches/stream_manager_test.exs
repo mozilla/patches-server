@@ -81,6 +81,6 @@ defmodule Patches.StreamManagerTest do
     Manager.retrieve("test3")
 
     assert Manager.all_sessions_complete?("ubuntu:18.04")
-    assert Manager.all_sessions_complete?("alpine:3.4")
+    assert Manager.all_sessions_complete?()
   end
 end

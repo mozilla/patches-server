@@ -192,7 +192,7 @@ defmodule Patches.StreamManager do
         config.default_window_length)
 
     new_states =
-      Map.update(states, session_id, fn state=%{ current_index: i } ->
+      Map.update(states, session_id, session, fn state=%{ current_index: i } ->
         %{ state | current_index: i + Enum.count(vulns) }
       end)
 
