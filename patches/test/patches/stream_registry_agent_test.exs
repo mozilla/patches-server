@@ -77,4 +77,30 @@ defmodule Patches.StreamRegistry.AgentTest do
     assert SRAgent.retrieve("test1", 1) == [1]
     assert SRAgent.retrieve("test2", 2) == [1,2]
   end
+
+  test "multiple calls to retrieve progress through the cache window" do
+    sessions =
+      [
+        %Patches.Server.Session{ platform: "discarded", id: "test1" },
+        %Patches.Server.Session{ platform: "discarded", id: "test2" },
+      ]
+
+    SRAgent.register_sessions("ubuntu:18.04", [1,2,3,4,5], sessions)
+
+    assert SRAgent.retrieve("test1", 1) == [1]
+    assert SRAgent.retrieve("test1", 2) == [2,3]
+  end
+
+  test "after reading an entire window, calls to retrieve return an empty list" do
+    sessions =
+      [
+        %Patches.Server.Session{ platform: "discarded", id: "test1" },
+        %Patches.Server.Session{ platform: "discarded", id: "test2" },
+      ]
+
+    SRAgent.register_sessions("ubuntu:18.04", [1,2,3,4,5], sessions)
+    SRAgent.retrieve("test1")
+
+    assert SRAgent.retrieve("test1") == []
+  end
 end
