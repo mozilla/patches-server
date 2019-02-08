@@ -103,4 +103,19 @@ defmodule Patches.StreamRegistry do
         []
     end
   end
+
+  def update_cache(registry, platform, update_fn) when is_function(update_fn) do
+    cache =
+      Map.get(registry.caches, platform)
+
+    if cache != nil do
+      %{ registry | caches: Map.update(registry.caches, platform, cache, update_fn) }
+    else
+      registry
+    end
+  end
+
+  def update_cache(registry, platform, shift_amount \\ @default_window_length) do
+    update_cache(registry, platform, &CacheWindow.shift_right(&1, shift_amount))
+  end
 end
