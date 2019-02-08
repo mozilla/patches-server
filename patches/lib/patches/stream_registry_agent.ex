@@ -97,4 +97,53 @@ defmodule Patches.StreamRegistry.Agent do
       {values, new_state}
     end)
   end
+
+  @doc """
+  Shift the cache window of each cache being managed forward.
+  """
+  def update_caches() do
+    Agent.update(__MODULE__, fn %{ config: cfg, registry: reg } ->
+      new_registry =
+        Enum.reduce(Map.keys(reg.caches), reg, fn (platform, registry) ->
+          Registry.update_cache(registry, platform, cfg.max_window_length)
+        end)
+
+      %{
+        config: cfg,
+        registry: new_registry,
+      }
+    end)
+  end
+
+  @doc """
+  Update the collections being managed by each cache with a given `update_fn`.
+
+  The provided `update_fn` will be called with:
+
+  1. The name of the platform identifying the cache being updated and
+  2. The collection being managed by the cache in question
+
+  and is expected to return a new collection.
+
+  This function will compute a new view over the returned collection using
+  the `start_index` and window `length` from the state of the existing cache.
+  """
+  def update_caches(update_fn) when is_function(update_fn) do
+    Agent.update(__MODULE__, fn state=%{ registry: reg } ->
+      new_registry =
+        Enum.reduce(Map.keys(reg.caches), reg, fn (platform, registry) ->
+          Registry.update_cache(registry, platform, fn cache ->
+            new_collection =
+              update_fn.(platform, cache.collection)
+
+            new_view =
+              Window.view(new_collection, cache.start_index, cache.length)
+
+            %{ cache | collection: new_collection, view: new_view }
+          end)
+        end)
+
+      %{ state | registry: new_registry }
+    end)
+  end
 end
