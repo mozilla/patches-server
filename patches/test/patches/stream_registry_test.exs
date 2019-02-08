@@ -11,13 +11,27 @@ defmodule Patches.StreamRegistryTest do
     %Patches.Server.Session{ platform: "alpine:3.4", id: "test3" },
   ]
 
+  def init_registry(window_len \\ 5) do
+    sorted =
+      Enum.reduce(@test_sessions, %{}, fn (session, mapping) ->
+        Map.update(mapping, session.platform, [ session ], fn sessions ->
+          [ session | sessions ]
+        end)
+      end)
+
+    Enum.reduce(sorted, Registry.init(), fn ({platform, sessions}, reg) ->
+      Registry.register_sessions(
+        reg,
+        platform: platform,
+        collection: [1,2,3,4,5],
+        sessions: sessions,
+        window_length: window_len)
+    end)
+  end
+
   test "managing a new stream for a collection creates a cache window" do
     %{ caches: %{ "ubuntu:18.04" => %{ view: _view } } } =
-      Registry.register_sessions(
-        Registry.init(),
-        platform: "ubuntu:18.04",
-        collection: [1,2,3,4,5],
-        sessions: @test_sessions)
+      init_registry()
   end
 
   test "managing a new stream for a collection create session states" do
@@ -27,11 +41,7 @@ defmodule Patches.StreamRegistryTest do
       |> Map.get(:id)
 
     %{ sessions: %{ ^test_id  => %SessionState{} } } =
-      Registry.register_sessions(
-        Registry.init(),
-        platform: "ubuntu:18.04",
-        collection: [1,2,3,4,5],
-        sessions: @test_sessions)
+      init_registry()
   end
 
   test "can retrieve the view over the collection managed by a cache" do
@@ -41,11 +51,7 @@ defmodule Patches.StreamRegistryTest do
       |> Map.get(:id)
 
     view =
-      Registry.init()
-      |> Registry.register_sessions(
-        platform: "ubuntu:18.04",
-        collection: [1,2,3,4,5],
-        sessions: @test_sessions)
+      init_registry()
       |> Registry.cache_lookup("ubuntu:18.04", test_id)
 
     assert view == [1,2,3,4,5]
@@ -58,11 +64,7 @@ defmodule Patches.StreamRegistryTest do
       |> Map.get(:id)
 
     view =
-      Registry.init()
-      |> Registry.register_sessions(
-        platform: "ubuntu:18.04",
-        collection: [1,2,3,4,5],
-        sessions: @test_sessions)
+      init_registry()
       |> Registry.cache_lookup("ubuntu:18.04", test_id, 3)
 
     assert view == [1,2,3]
@@ -75,12 +77,7 @@ defmodule Patches.StreamRegistryTest do
       |> Map.get(:id)
 
     view =
-      Registry.init()
-      |> Registry.register_sessions(
-        platform: "ubuntu:18.04",
-        collection: [1,2,3,4,5],
-        sessions: @test_sessions,
-        window_length: 3)
+      init_registry(3)
       |> Registry.cache_lookup("ubuntu:18.04", test_id)
 
     assert view == [1,2,3]
@@ -88,12 +85,9 @@ defmodule Patches.StreamRegistryTest do
 
   test "can update the cache maintained for a given platform" do
     %{ caches: %{ "ubuntu:18.04" => %{ collection: "worked" } } } =
-      Registry.init()
-      |> Registry.register_sessions(
-          platform: "ubuntu:18.04",
-          collection: [1,2,3,4,5],
-          sessions: @test_sessions)
-      |> Registry.update_cache("ubuntu:18.04", fn cache -> %{ cache | collection: "worked" } end)
+      Registry.update_cache(init_registry(), "ubuntu:18.04", fn cache ->
+        %{ cache | collection: "worked" }
+      end)
   end
 
   test "can update the state of a given session" do
@@ -103,22 +97,14 @@ defmodule Patches.StreamRegistryTest do
       |> Map.get(:id)
     
     %{ sessions: %{ ^test_id => %{ platform: "overwritten" } } } =
-      Registry.init()
-      |> Registry.register_sessions(
-          platform: "ubuntu:18.04",
-          collection: [1,2,3,4,5],
-          sessions: @test_sessions)
-      |> Registry.update_session(test_id, fn session -> %{ session | platform: "overwritten"} end)
+      Registry.update_session(init_registry(), test_id, fn session ->
+        %{ session | platform: "overwritten"}
+      end)
   end
   
   test "updating without a function argument shifts the cache window for a platform forward" do
     %{ caches: %{ "ubuntu:18.04" => %{ start_index: start_index } } } =
-      Registry.init()
-      |> Registry.register_sessions(
-          platform: "ubuntu:18.04",
-          collection: [1,2,3,4,5],
-          sessions: @test_sessions)
-      |> Registry.update_cache("ubuntu:18.04")
+      Registry.update_cache(init_registry(), "ubuntu:18.04")
 
     assert start_index > 0
   end
@@ -130,12 +116,7 @@ defmodule Patches.StreamRegistryTest do
       |> Map.get(:id)
     
     %{ sessions: %{ ^test_id => %{ window_index: window_index } } } =
-      Registry.init()
-      |> Registry.register_sessions(
-          platform: "ubuntu:18.04",
-          collection: [1,2,3,4,5],
-          sessions: @test_sessions)
-      |> Registry.update_session(test_id, 2)
+      Registry.update_session(init_registry(), test_id, 2)
 
     assert window_index > 0
   end
@@ -147,12 +128,7 @@ defmodule Patches.StreamRegistryTest do
       |> Map.get(:id)
   
     complete? =
-      Registry.init()
-      |> Registry.register_sessions(
-          platform: "ubuntu:18.04",
-          collection: [1,2,3,4,5],
-          sessions: @test_sessions)
-      |> Registry.session_complete?(test_id)
+      Registry.session_complete?(init_registry(), test_id)
 
     assert not complete?
   end
@@ -164,11 +140,7 @@ defmodule Patches.StreamRegistryTest do
       |> Map.get(:id)
   
     complete? =
-      Registry.init()
-      |> Registry.register_sessions(
-          platform: "ubuntu:18.04",
-          collection: [1,2,3,4,5],
-          sessions: @test_sessions)
+      init_registry()
       |> Registry.update_session(test_id, 5)
       |> Registry.session_complete?(test_id)
 
@@ -176,57 +148,38 @@ defmodule Patches.StreamRegistryTest do
   end
 
   test "can query to determine if all sessions are complete" do
-    registry = 
-      Registry.init()
-      |> Registry.register_sessions(
-          platform: "ubuntu:18.04",
-          collection: [1,2,3,4,5],
-          sessions: @test_sessions)
-
-    assert not Registry.all_sessions_complete?(registry)
+    assert not Registry.all_sessions_complete?(init_registry())
   end
   
   test "all sessions are reported as complete after they have read all the items in a window" do
     registry =
-      Registry.init()
-      |> Registry.register_sessions(
-          platform: "ubuntu:18.04",
-          collection: [1,2,3,4,5],
-          sessions: @test_sessions)
+      init_registry()
 
     updated_registry =
       @test_sessions
-      |> Map.get(:id)
-      |> Enum.reduce(registry, fn id -> Registry.update_session(id, 5) end)
+      |> Enum.map(&Map.get(&1, :id))
+      |> Enum.reduce(registry, fn (id, reg) -> Registry.update_session(reg, id, 5) end)
 
     assert Registry.all_sessions_complete?(updated_registry)
   end
 
   test "can query to determine if all sessions reading from a specific cache are complete" do
-    registry = 
-      Registry.init()
-      |> Registry.register_sessions(
-          platform: "ubuntu:18.04",
-          collection: [1,2,3,4,5],
-          sessions: @test_sessions)
-
-    assert not Registry.all_sessions_complete?(registry, "ubuntu:18.04")
+    assert not Registry.all_sessions_complete?(init_registry(), "ubuntu:18.04")
   end
   
   test "sessions reading from a specific cache are reported complete after reading all content" do
     registry =
-      Registry.init()
-      |> Registry.register_sessions(
-          platform: "ubuntu:18.04",
-          collection: [1,2,3,4,5],
-          sessions: @test_sessions)
+      init_registry()
 
     updated_registry =
       @test_sessions
       |> Enum.filter(fn %{ platform: pform } -> pform == "ubuntu:18.04" end)
-      |> Map.get(:id)
-      |> Enum.reduce(registry, fn id -> Registry.update_session(id, 5) end)
+      |> Enum.map(&Map.get(&1, :id))
+      |> Enum.reduce(registry, fn (id, reg) -> Registry.update_session(reg, id, 5) end)
 
-    assert Registry.all_sessions_complete?(updated_registry, "ubuntu:18.04")
+    all_complete? =
+      Registry.all_sessions_complete?(updated_registry, "ubuntu:18.04")
+
+    assert all_complete?
   end
 end
