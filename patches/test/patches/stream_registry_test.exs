@@ -52,7 +52,7 @@ defmodule Patches.StreamRegistryTest do
 
     view =
       init_registry()
-      |> Registry.cache_lookup("ubuntu:18.04", test_id)
+      |> Registry.cache_lookup(test_id)
 
     assert view == [1,2,3,4,5]
   end
@@ -65,7 +65,7 @@ defmodule Patches.StreamRegistryTest do
 
     view =
       init_registry()
-      |> Registry.cache_lookup("ubuntu:18.04", test_id, 3)
+      |> Registry.cache_lookup(test_id, 3)
 
     assert view == [1,2,3]
   end
@@ -78,7 +78,7 @@ defmodule Patches.StreamRegistryTest do
 
     view =
       init_registry(3)
-      |> Registry.cache_lookup("ubuntu:18.04", test_id)
+      |> Registry.cache_lookup(test_id)
 
     assert view == [1,2,3]
   end

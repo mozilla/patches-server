@@ -104,23 +104,21 @@ defmodule Patches.StreamRegistry do
   by `platform`.  The window's view will be offset by the owner of
   `session_id`'s `window_index`.
   """
-  def cache_lookup(registry, platform, session_id) do
-    cache_lookup(registry, platform, session_id, @default_window_length)
+  def cache_lookup(registry, session_id) do
+    cache_lookup(registry, session_id, @default_window_length)
   end
 
   @doc """
   Read at most `limit` items from the cache identified by `platform`.
   """
-  def cache_lookup(%{ caches: caches, sessions: sessions }, platform, session_id, limit) do
-    case {caches[platform], sessions[session_id]} do
-      {nil, _session} ->
+  def cache_lookup(%{ caches: caches, sessions: sessions }, session_id, limit) do
+    with %{ platform: platform, window_index: index } <- Map.get(sessions, session_id),
+         %{ view: view } <- Map.get(caches, platform)
+    do
+      Window.view(view, index, limit)
+    else
+      _ ->
         []
-
-      {_cache, nil} ->
-        []
-
-      {cache, session} ->
-        Window.view(cache.view, session.window_index, limit)
     end
   end
 
