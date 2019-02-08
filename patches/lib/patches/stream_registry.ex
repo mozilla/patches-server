@@ -31,6 +31,11 @@ defmodule Patches.StreamRegistry do
   }
   ```
   """
+  
+  @default_window_length 32
+
+  alias Patches.StreamRegistry.SessionState
+  alias Patches.CacheWindow
 
   @doc """
   Initialize an empty registry.
@@ -40,5 +45,44 @@ defmodule Patches.StreamRegistry do
       caches: %{},
       sessions: %{},
     }
+  end
+  
+  def register_sessions(%{ caches: caches, sessions: sessions }, [
+    platform: platform,
+    collection: collection,
+    sessions: new_sessions,
+    window_length: window_length,
+  ]) do
+    new_cache =
+      CacheWindow.init(collection, window_length)
+
+    new_session_states =
+      for %{ id: id } <- new_sessions,
+          state = %SessionState{
+            platform: platform,
+            window_index: 0,
+            last_read_at: Time.utc_now(),
+          },
+          into: %{},
+          do: {id, state}
+
+    %{
+      caches: Map.put(caches, platform, new_cache),
+      sessions: Map.merge(sessions, new_session_states),
+    }
+        
+  end
+
+  def register_sessions(registry, [
+    platform: platform,
+    collection: collection,
+    sessions: sessions,
+  ]) do
+    register_sessions(registry, [
+      platform: platform,
+      collection: collection,
+      sessions: sessions,
+      window_length: @default_window_length,
+    ])
   end
 end
