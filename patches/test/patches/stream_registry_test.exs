@@ -139,4 +139,38 @@ defmodule Patches.StreamRegistryTest do
 
     assert window_index > 0
   end
+
+  test "can query to determine if a session is complete" do
+    test_id =
+      @test_sessions
+      |> Enum.at(0)
+      |> Map.get(:id)
+  
+    complete? =
+      Registry.init()
+      |> Registry.register_sessions(
+          platform: "ubuntu:18.04",
+          collection: [1,2,3,4,5],
+          sessions: @test_sessions)
+      |> Registry.session_complete?(test_id)
+
+    assert not complete?
+  end
+  test "a session is reported as complete after it has read all the items in a window" do
+    test_id =
+      @test_sessions
+      |> Enum.at(0)
+      |> Map.get(:id)
+  
+    complete? =
+      Registry.init()
+      |> Registry.register_sessions(
+          platform: "ubuntu:18.04",
+          collection: [1,2,3,4,5],
+          sessions: @test_sessions)
+      |> Registry.update_session(test_id, 5)
+      |> Registry.session_complete?(test_id)
+
+    assert complete?
+  end
 end

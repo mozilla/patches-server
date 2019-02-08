@@ -159,12 +159,26 @@ defmodule Patches.StreamRegistry do
   end
 
   @doc """
-  Update teh state of a session by shifting offset into the cache window it's reading
+  Update the state of a session by shifting offset into the cache window it's reading
   from by `shift_by` positions.
   """
   def update_session(registry, session_id, shift_by) when is_integer(shift_by) do
     update_session(registry, session_id, fn session=%{ window_index: i } ->
       %{ session | window_index: i + shift_by }
     end)
+  end
+
+  @doc """
+  Determine if a session has read all of the values available under its cache window.
+  """
+  def session_complete?(%{ caches: caches, sessions: sessions }, session_id) do
+    with %{ platform: platform, window_index: index } <- Map.get(sessions, session_id),
+         %{ start_index: start, view: view } <- Map.get(caches, platform)
+    do
+      index >= start + Enum.count(view)
+    else
+      _ ->
+        true
+    end
   end
 end
