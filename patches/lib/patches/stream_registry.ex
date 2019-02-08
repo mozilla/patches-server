@@ -181,4 +181,19 @@ defmodule Patches.StreamRegistry do
         true
     end
   end
+
+  def all_sessions_complete?(state=%{ caches: caches }) do
+    caches
+    |> Map.keys()
+    |> Enum.all?(fn platform -> all_sessions_complete?(state, platform) end)
+  end
+
+  def all_sessions_complete?(state=%{ caches: caches, sessions: sessions }, platform) do
+    complete? =
+      for {id, %{ platform: current_platform }} <- sessions,
+          current_platform == platform,
+          do: session_complete?(state, id)
+
+    Enum.all?(complete?)
+  end
 end
