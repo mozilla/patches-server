@@ -156,6 +156,7 @@ defmodule Patches.StreamRegistryTest do
 
     assert not complete?
   end
+
   test "a session is reported as complete after it has read all the items in a window" do
     test_id =
       @test_sessions
@@ -172,5 +173,60 @@ defmodule Patches.StreamRegistryTest do
       |> Registry.session_complete?(test_id)
 
     assert complete?
+  end
+
+  test "can query to determine if all sessions are complete" do
+    registry = 
+      Registry.init()
+      |> Registry.register_sessions(
+          platform: "ubuntu:18.04",
+          collection: [1,2,3,4,5],
+          sessions: @test_sessions)
+
+    assert not Registry.all_sessions_complete?(registry)
+  end
+  
+  test "all sessions are reported as complete after they have read all the items in a window" do
+    registry =
+      Registry.init()
+      |> Registry.register_sessions(
+          platform: "ubuntu:18.04",
+          collection: [1,2,3,4,5],
+          sessions: @test_sessions)
+
+    updated_registry =
+      @test_sessions
+      |> Map.get(:id)
+      |> Enum.reduce(registry, fn id -> Registry.update_session(id, 5) end)
+
+    assert Registry.all_sessions_complete?(updated_registry)
+  end
+
+  test "can query to determine if all sessions reading from a specific cache are complete" do
+    registry = 
+      Registry.init()
+      |> Registry.register_sessions(
+          platform: "ubuntu:18.04",
+          collection: [1,2,3,4,5],
+          sessions: @test_sessions)
+
+    assert not Registry.all_sessions_complete?(registry, "ubuntu:18.04")
+  end
+  
+  test "sessions reading from a specific cache are reported complete after reading all content" do
+    registry =
+      Registry.init()
+      |> Registry.register_sessions(
+          platform: "ubuntu:18.04",
+          collection: [1,2,3,4,5],
+          sessions: @test_sessions)
+
+    updated_registry =
+      @test_sessions
+      |> Enum.filter(fn %{ platform: pform } -> pform == "ubuntu:18.04" end)
+      |> Map.get(:id)
+      |> Enum.reduce(registry, fn id -> Registry.update_session(id, 5) end)
+
+    assert Registry.all_sessions_complete?(updated_registry, "ubuntu:18.04")
   end
 end
