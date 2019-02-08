@@ -146,4 +146,24 @@ defmodule Patches.StreamRegistry.Agent do
       %{ state | registry: new_registry }
     end)
   end
+
+  @doc """
+  Determine whether all of the scanners with active sessions have read
+  all of the vulnerabilities available in their respective caches.
+  """
+  def all_sessions_complete?() do
+    Agent.get(__MODULE__, fn %{ registry: reg } ->
+      Registry.all_sessions_complete?(reg)
+    end)
+  end
+
+  @doc """
+  Determine whether all of the scanners reading vulnerabilities
+  for a specific platform have read everything currently available.
+  """
+  def all_sessions_complete?(platform) do
+    Agent.get(__MODULE__, fn %{ registry: reg } ->
+      Registry.all_sessions_complete?(reg, platform)
+    end)
+  end
 end
