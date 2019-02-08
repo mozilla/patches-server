@@ -85,4 +85,22 @@ defmodule Patches.StreamRegistry do
       window_length: @default_window_length,
     ])
   end
+
+  def cache_lookup(registry, platform, session_id) do
+    cache_lookup(registry, platform, session_id, @default_window_length)
+  end
+
+  def cache_lookup(registry, platform, session_id, limit) do
+    with cache <- registry.caches[platform],
+         cache != nil,
+         session <- registry.sessions[session_id],
+         session != nil
+    do
+      cache.view
+      |> Window.view(session.window_index, limit)
+    else
+      _ ->
+        []
+    end
+  end
 end
