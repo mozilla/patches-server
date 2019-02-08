@@ -124,6 +124,10 @@ defmodule Patches.StreamRegistry do
     end
   end
 
+  @doc """
+  Update the state of the cache identified by `platform` by shifting its
+  `CacheWindow`'s view forward `shift_amount` positions.
+  """
   def update_cache(registry, platform, shift_amount \\ @default_window_length)
 
   @doc """
@@ -172,6 +176,8 @@ defmodule Patches.StreamRegistry do
 
   @doc """
   Determine if a session has read all of the values available under its cache window.
+
+  If no session corresponds to `session_id`, this function returns `true`.
   """
   def session_complete?(%{ caches: caches, sessions: sessions }, session_id) do
     with %{ platform: platform, window_index: index } <- Map.get(sessions, session_id),
