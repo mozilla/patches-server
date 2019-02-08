@@ -103,4 +103,49 @@ defmodule Patches.StreamRegistry.AgentTest do
 
     assert SRAgent.retrieve("test1") == []
   end
+
+  test "can update the collection maintained by a cache identified by a platform" do
+    session =
+      %Patches.Server.Session{ platform: "discarded", id: "test1" }
+
+    SRAgent.register_sessions("ubuntu:18.04", [1,2,3], [session])
+    
+    SRAgent.update_caches(fn (_platform, _coll) -> [4,5] end)
+
+    assert SRAgent.retrieve("test1") == [4,5]
+  end
+  
+  test "after updating a cache's collection, the view retains our previous position" do
+    session =
+      %Patches.Server.Session{ platform: "discarded", id: "test1" }
+
+    SRAgent.register_sessions("ubuntu:18.04", [1,2,3,4,5], [session])
+    SRAgent.retrieve("test1", 2)
+    
+    SRAgent.update_caches(fn (_platform, _coll) -> [10,11,12,13,14,15] end)
+
+    assert SRAgent.retrieve("test1") == [12,13,14,15]
+  end
+
+  test "can update caches in different ways depending on the platform identifying them" do
+    session1 =
+      %Patches.Server.Session{ platform: "discarded", id: "test1" }
+    
+    session2 =
+      %Patches.Server.Session{ platform: "discarded", id: "test2" }
+
+    SRAgent.register_sessions("ubuntu:18.04", [1,2,3], [session1])
+    SRAgent.register_sessions("alpine:3.4", [1,2,3], [session2])
+   
+    SRAgent.update_caches(fn
+      ("ubuntu:18.04", collection) ->
+        [4,5]
+
+      (_platform, coll) ->
+        coll
+    end)
+
+    assert SRAgent.retrieve("test1") == [4,5]
+    assert SRAgent.retrieve("test2") == [1,2,3]
+  end
 end
