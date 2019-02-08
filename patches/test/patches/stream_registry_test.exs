@@ -135,7 +135,7 @@ defmodule Patches.StreamRegistryTest do
           platform: "ubuntu:18.04",
           collection: [1,2,3,4,5],
           sessions: @test_sessions)
-      |> Registry.update_session(test_id)
+      |> Registry.update_session(test_id, 2)
 
     assert window_index > 0
   end
