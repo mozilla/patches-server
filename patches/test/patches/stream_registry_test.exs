@@ -5,6 +5,12 @@ defmodule Patches.StreamRegistryTest do
   alias Patches.StreamRegistry, as: Registry
   alias Patches.StreamRegistry.SessionState
 
+  @test_sessions [
+    %Patches.Server.Session{ platform: "ubuntu:18.04", id: "test1" },
+    %Patches.Server.Session{ platform: "ubuntu:18.04", id: "test2" },
+    %Patches.Server.Session{ platform: "alpine:3.4", id: "test3" },
+  ]
+
   test "managing a new stream for a collection creates a cache window" do
     %{ caches: %{ "ubuntu:18.04" => %{ view: _view } } } =
       Registry.register_sessions(
