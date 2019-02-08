@@ -72,7 +72,7 @@ defmodule Patches.StreamManagerTest do
   end
 
   test "can query to determine whether all sessions are complete or not", %{ sessions: sessions } do
-    Manager.manage(sessions, fn _platform -> CacheWindow.init([1,2,3,4,5], 3) end)
+    Manager.manage(sessions, fn _platform -> CacheWindow.init([1,2,3,4,5], 10) end)
     Manager.retrieve("test1")
     Manager.retrieve("test1")
     Manager.retrieve("test2")
