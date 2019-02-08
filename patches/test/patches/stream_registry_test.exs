@@ -15,7 +15,12 @@ defmodule Patches.StreamRegistryTest do
   end
 
   test "managing a new stream for a collection create session states" do
-    %{ sessions: %{ Enum.at(@test_sessions, 0) => %SessionState{} } } =
+    test_id =
+      @test_sessions
+      |> Enum.at(0)
+      |> Map.get(:id)
+
+    %{ sessions: %{ ^test_id  => %SessionState{} } } =
       Registry.register_sessions(
         Registry.init(),
         platform: "ubuntu:18.04",
