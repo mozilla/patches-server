@@ -65,21 +65,22 @@ defmodule Patches.StreamRegistry do
     new_cache =
       CacheWindow.init(collection, window_length)
 
+    new_state =
+      %SessionState{
+        platform: platform,
+        window_index: 0,
+        last_read_at: Time.utc_now(),
+      }
+
     new_session_states =
-      for %{ id: id } <- new_sessions,
-          state = %SessionState{
-            platform: platform,
-            window_index: 0,
-            last_read_at: Time.utc_now(),
-          },
-          into: %{},
-          do: {id, state}
+      new_sessions
+      |> Enum.map(fn %{ id: id } -> {id, new_state} end)
+      |> Enum.into(%{})
 
     %{
       caches: Map.put(caches, platform, new_cache),
       sessions: Map.merge(sessions, new_session_states),
     }
-        
   end
 
   @doc """
@@ -110,19 +111,20 @@ defmodule Patches.StreamRegistry do
   @doc """
   Read at most `limit` items from the cache identified by `platform`.
   """
-  def cache_lookup(registry, platform, session_id, limit) do
-    with cache <- registry.caches[platform],
-         cache != nil,
-         session <- registry.sessions[session_id],
-         session != nil
-    do
-      cache.view
-      |> Window.view(session.window_index, limit)
-    else
-      _ ->
+  def cache_lookup(%{ caches: caches, sessions: sessions }, platform, session_id, limit) do
+    case {caches[platform], sessions[session_id]} do
+      {nil, _session} ->
         []
+
+      {_cache, nil} ->
+        []
+
+      {cache, session} ->
+        Window.view(cache.view, session.window_index, limit)
     end
   end
+
+  def update_cache(registry, platform, shift_amount \\ @default_window_length)
 
   @doc """
   Apply a function to update the state of the `CacheWindow` identified by `platform`.
@@ -141,7 +143,7 @@ defmodule Patches.StreamRegistry do
   Update the state of the cache identified by `platform` by shifting its
   `CacheWindow`'s view forward `shift_amount` positions.
   """
-  def update_cache(registry, platform, shift_amount \\ @default_window_length) do
+  def update_cache(registry, platform, shift_amount) do
     update_cache(registry, platform, &CacheWindow.shift_right(&1, shift_amount))
   end
 
@@ -182,18 +184,24 @@ defmodule Patches.StreamRegistry do
     end
   end
 
+  @doc """
+  Determine whether all of the sessions in a registry have been served all of
+  the values currently available to them.
+  """
   def all_sessions_complete?(state=%{ caches: caches }) do
     caches
     |> Map.keys()
     |> Enum.all?(fn platform -> all_sessions_complete?(state, platform) end)
   end
 
-  def all_sessions_complete?(state=%{ caches: caches, sessions: sessions }, platform) do
-    complete? =
-      for {id, %{ platform: current_platform }} <- sessions,
-          current_platform == platform,
-          do: session_complete?(state, id)
-
-    Enum.all?(complete?)
+  @doc """
+  Determine whether all of the sessions reading the cache corresponding to a
+  specific platform have been served all of the values currently available to them.
+  """
+  def all_sessions_complete?(state=%{ sessions: sessions }, platform) do
+    sessions
+    |> Enum.into([])
+    |> Enum.filter(fn {_id, session} -> session.platform == platform end)
+    |> Enum.all?(fn {id, _session} -> session_complete?(state, id) end)
   end
 end
