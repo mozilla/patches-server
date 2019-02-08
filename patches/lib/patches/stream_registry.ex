@@ -32,12 +32,13 @@ defmodule Patches.StreamRegistry do
   ```
   """
 
+  @doc """
+  Initialize an empty registry.
+  """
   def init() do
     %{
       caches: %{},
       sessions: %{},
     }
   end
-
-  def 
 end
