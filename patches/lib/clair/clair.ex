@@ -70,9 +70,10 @@ defmodule Clair do
 
     with {:ok, json}  <- summaries(state),
          [sums, np]   <- summaries_and_next_page.(json),
-         {:ok, vulns} <- all_descriptions.(sums)
+         {:ok, vulns} <- all_descriptions.(sums),
+         encoded      <- Enum.map(vulns, &to_vulnerability(&1, state.platform))
     do
-      {:ok, vulns, %{ state | next_page: np }}
+      {:ok, encoded, %{ state | next_page: np }}
     end
   end
 
@@ -156,4 +157,40 @@ defmodule Clair do
   defp try_decode_json({:error, reason}) do
     {:error, reason}
   end
+
+  defp to_vulnerability(%{
+    "Name" => name,
+    "Link" => href,
+    "Severity" => sev,
+    "FixedIn" => fixes,
+  }, platform) do
+    severity =
+      to_severity(sev)
+
+    package_fixes =
+      Enum.map(fixes, &to_package/1)
+
+    %Patches.Vulnerability{
+      name: name,
+      affected_platform: platform,
+      details_href: href,
+      severity: severity,
+      fixed_in: package_fixes,
+    }
+  end
+
+  defp to_severity("Unknown"), do: Patches.Vulnerability.Severity.unknown
+  defp to_severity("Negligible"), do: Patches.Vulnerability.Severity.negligible
+  defp to_severity("Low"), do: Patches.Vulnerability.Severity.low
+  defp to_severity("Medium"), do: Patches.Vulnerability.Severity.medium
+  defp to_severity("High"), do: Patches.Vulnerability.Severity.high
+  defp to_severity("Urgent"), do: Patches.Vulnerability.Severity.urgent
+  defp to_severity("Defcon"), do: Patches.Vulnerability.Severity.critical
+  defp to_severity(_unrecognized), do: Patches.Vulnerability.Severity.unknown
+
+  defp to_package(%{ "Name" => name, "Version" => ver }) do
+    %{ name: name, version: ver }
+  end
+
+  defp to_package(_unrecognized), do: %{ name: "unrecognized", version: "unknown" }
 end

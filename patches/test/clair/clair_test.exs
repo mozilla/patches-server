@@ -138,6 +138,23 @@ defmodule ClairTest do
     assert Enum.count(vulns) == 2
   end
 
+  test "outputs values of type `Patches.Vulnerability`" do
+    {:ok, vulns, _config} =
+      Clair.init("test", "ubuntu:18.04", 32, Clair.HttpSuccessStub)
+      |> Clair.retrieve()
+
+    [
+      %Patches.Vulnerability{ name: name1, severity: sev1 },
+      %Patches.Vulnerability{ name: name2, severity: sev2 },
+    ] =
+      vulns
+
+    assert name1 == "testvuln"
+    assert name2 == "testvuln"
+    assert sev1 == Patches.Vulnerability.Severity.high
+    assert sev2 == Patches.Vulnerability.Severity.high
+  end
+
   test "returns any error it encounters making requests to clair" do
     {:error, _msg} =
       Clair.init("test", "ubuntu:18.04", 32, Clair.HttpFailureStub)
