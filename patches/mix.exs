@@ -16,8 +16,7 @@ defmodule Patches.MixProject do
     [
       extra_applications: [
         :logger,
-        :cowboy,
-        :plug,
+        :plug_cowboy,
       ],
       mod: {Patches.Application, []}
     ]
