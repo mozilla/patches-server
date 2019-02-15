@@ -26,11 +26,11 @@ defmodule Patches.StreamRegistry.Agent do
   @doc """
   Start a link to an `Agent` maintaining a given `StreamRegistry`.
   """
-  def start_link(config, stream_registry) do
+  def start_link(config) do
     init =
       %{
         config: config,
-        registry: stream_registry,
+        registry: Registry.init(),
       }
 
     Agent.start_link(fn -> init end, name: __MODULE__)

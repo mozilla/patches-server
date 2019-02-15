@@ -14,7 +14,7 @@ defmodule Patches.StreamRegistry.AgentTest do
       }
 
     {:ok, pid} =
-      SRAgent.start_link(config, Registry.init())
+      SRAgent.start_link(config)
 
     %{
       config: config,
