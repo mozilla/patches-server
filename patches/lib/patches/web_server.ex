@@ -1,6 +1,7 @@
 defmodule Patches.WebServer do
   import Plug.Conn
 
+  alias Patches.Timeout.Agent, as: Timeouts
   alias Patches.Server.Agent, as: Sessions
   alias Patches.StreamRegistry.Agent, as: VulnStreams
 
@@ -29,6 +30,8 @@ defmodule Patches.WebServer do
   end
 
   defp serve_vulnerabilities(conn, req_id) do
+    Timeouts.notify_activity(session: req_id)
+
     {status, response} =
       case VulnStreams.retrieve(req_id) do
         [] ->
@@ -48,6 +51,8 @@ defmodule Patches.WebServer do
     {status, response} =
       case Sessions.queue_session(scanning: platform) do
         {:ok, new_session_id} ->
+          Timeouts.notify_activity(session: new_session_id)
+
           {200, %{ "error" => nil, "requestID" => new_session_id }}
 
         {:error, :queue_full} ->
