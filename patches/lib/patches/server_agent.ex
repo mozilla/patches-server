@@ -131,12 +131,12 @@ defmodule Patches.Server.Agent do
   @doc """
   Remove a session from the active & queued sets.
   """
-  def timeout_session(session_id) when is_binary(session_id) do
+  def terminate_session(session_id) when is_binary(session_id) do
     Agent.update(__MODULE__, fn %{ state: state, config: config } ->
       new_state =
         state
-        |> Server.timeout_active_session(session_id)
-        |> Server.timeout_queued_session(session_id)
+        |> Server.terminate_active_session(session_id)
+        |> Server.terminate_queued_session(session_id)
 
       %{
         config: config,
