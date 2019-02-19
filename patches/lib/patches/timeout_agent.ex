@@ -20,6 +20,7 @@ defmodule Patches.Timeout.Agent do
   alias Patches.Server.Agent, as: ServerAgent
 
   @doc """
+  Start and link to a new agent.
   """
   def start_link(config \\ %Config{}) do
     init =
@@ -33,6 +34,10 @@ defmodule Patches.Timeout.Agent do
   end
 
   @doc """
+  Instruct the agent to start checking session timeouts.
+  
+  This function will block the calling process indefinitely, and so
+  should be called in its own process via `spawn/1`.
   """
   def run() do
     time_to_sleep =
@@ -67,12 +72,16 @@ defmodule Patches.Timeout.Agent do
   end
 
   @doc """
+  Instruct the agent to stop checking session timeouts.
   """
   def stop() do
     Agent.update(__MODULE__, &Map.put(&1, :state, :stopped))
   end
 
   @doc """
+  Record the fact that a particular session was found to be active.
+
+  Returns the last time the session was heard from.
   """
   def notify_activity(session: session_id) when is_binary(session_id) do
     Agent.get_and_update(__MODULE__, fn log=%{ sessions: sessions } ->
@@ -93,6 +102,7 @@ defmodule Patches.Timeout.Agent do
   end
 
   @doc """
+  Lookup a session ID to find the last time it was heard from.
   """
   def last_heard_from(session_id) do
     Agent.get(__MODULE__, fn
@@ -105,6 +115,9 @@ defmodule Patches.Timeout.Agent do
   end
 
   @doc """
+  Determine if a session has timed out given the last time it was heard from
+  and a number of seconds after which a session should be considered to have
+  timed out.
   """
   def timed_out?(last_heard_from, timeout_seconds) do
     timed_out =
