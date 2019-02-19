@@ -208,4 +208,11 @@ defmodule Patches.StreamRegistry do
     |> Enum.filter(fn {_id, session} -> session.platform == platform end)
     |> Enum.all?(fn {id, _session} -> session_complete?(state, id) end)
   end
+
+  @doc """
+  Remove one specific session, given by its unique identifer, from the registry.
+  """
+  def terminate_session(state=%{ sessions: sessions }, session_id) do
+    %{ state | sessions: Map.delete(sessions, session_id) }
+  end
 end

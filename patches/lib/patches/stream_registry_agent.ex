@@ -166,4 +166,13 @@ defmodule Patches.StreamRegistry.Agent do
       Registry.all_sessions_complete?(reg, platform)
     end)
   end
+
+  @doc """
+  Remove a specific session from the stream registry.
+  """
+  def terminate_session(session_id) do
+    Agent.update(__MODULE__, fn state=%{ registry: reg } ->
+      Registry.terminate_session(reg, session_id)
+    end)
+  end
 end

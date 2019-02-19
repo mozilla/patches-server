@@ -127,6 +127,23 @@ defmodule Patches.Server.Agent do
       |> Enum.map(fn {_id, session} -> session end)
     end)
   end
+
+  @doc """
+  Remove a session from the active & queued sets.
+  """
+  def timeout_session(session_id) when is_binary(session_id) do
+    Agent.update(__MODULE__, fn %{ state: state, config: config } ->
+      new_state =
+        state
+        |> Server.timeout_active_session(session_id)
+        |> Server.timeout_queued_session(session_id)
+
+      %{
+        config: config,
+        state: new_state,
+      }
+    end)
+  end
   
   @doc """
   Generate a new random hex ID of a particular `length`.
