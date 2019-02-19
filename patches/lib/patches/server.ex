@@ -89,14 +89,14 @@ defmodule Patches.Server do
   @doc """
   Remove a currently actie session.
   """
-  def timeout_active_session(server, session_id) do
+  def terminate_active_session(server, session_id) do
     %{ server | active_sessions: Map.delete(server.active_sessions, session_id) }
   end
 
   @doc """
   Remove a session from the set of sessions queued for later activation.
   """
-  def timeout_queud_session(server, session_id) do
-    %{ server | queued_sessions: Map.delete(server.queued_sessions, session_id }
+  def terminate_queued_session(server, session_id) do
+    %{ server | queued_sessions: Map.delete(server.queued_sessions, session_id) }
   end
 end
