@@ -11,6 +11,18 @@ end
 
 defmodule Patches.Timeout.Agent do
   @moduledoc """
+  Manages records indicating the time at which a session was last heard from.
+  Every time a request is received by `Patches.WebServer`, it is expected to call
+  `notify_active` to indicate observed activity of a new or existing session.
+
+  The `run` function will start an infinitely-looping, blocking procedure to
+  periodically check for sessions that have timed out.
+
+  The `timed_out` function retrieves a list of session IDs that have timed out
+  since the last call to `timed_out`.
+
+  Calling `stop` will put the agent into a state where the `run` function will
+  terminate.
   """
 
   use Agent
@@ -28,6 +40,7 @@ defmodule Patches.Timeout.Agent do
         state: :not_started,
         config: config,
         sessions: %{},
+        timed_out: [],
       }
 
     Agent.start_link(fn -> init end, name: __MODULE__)
@@ -48,7 +61,7 @@ defmodule Patches.Timeout.Agent do
         state=%{ state: :stopped } ->
           {[], state}
 
-        state=%{ sessions: sessions, config: config } ->
+        state=%{ sessions: sessions, config: config} ->
           timed_out =
             sessions
             |> Enum.filter(fn {_id, lhf} -> timed_out?(lhf, config.timeout) end)
@@ -59,7 +72,14 @@ defmodule Patches.Timeout.Agent do
             |> Enum.filter(fn {id, _lhf} -> Enum.find(timed_out, &( id == &1 )) == nil end)
             |> Enum.into(%{})
 
-          {timed_out, %{ state | sessions: new_sessions }}
+          new_state =
+            %{
+              state |
+              sessions: new_sessions,
+              timed_out: state.timed_out ++ timed_out,
+            }
+
+          {timed_out, new_state}
       end)
     
     Enum.each(timed_out_sessions, fn session_id ->
@@ -102,24 +122,16 @@ defmodule Patches.Timeout.Agent do
   end
 
   @doc """
-  Lookup a session ID to find the last time it was heard from.
+  Retrieve a list of IDs of sessions that have timed out since the last call to
+  this function.
   """
-  def last_heard_from(session_id) do
-    Agent.get(__MODULE__, fn
-      %{ sessions: %{ ^session_id => last_heard_from } } ->
-        last_heard_from
-
-      _ ->
-        nil
+  def timed_out() do
+    Agent.get_and_update(__MODULE__, fn state=%{ timed_out: ids } ->
+      {ids, %{ state | timed_out: [] }}
     end)
   end
 
-  @doc """
-  Determine if a session has timed out given the last time it was heard from
-  and a number of seconds after which a session should be considered to have
-  timed out.
-  """
-  def timed_out?(last_heard_from, timeout_seconds) do
+  defp timed_out?(last_heard_from, timeout_seconds) do
     timed_out =
       last_heard_from
       |> Time.add(timeout_seconds)

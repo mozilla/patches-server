@@ -22,40 +22,24 @@ defmodule Patches.Timeout.AgentTest do
   end
 
   test "Inactive sessions will be considered timed-out.", %{ config: config } do
+    spawn &Timeouts.run/0
     Timeouts.notify_activity(session: "testid")
 
     :timer.sleep((config.timeout + 1) * 1000)
 
-    lhf =
-      Timeouts.last_heard_from("testid")
-
-    assert lhf != nil
-    assert Timeouts.timed_out?(lhf, config.timeout)
+    assert ["testid"] == Timeouts.timed_out()
   end
 
   test "Active sessions will not be considered timed-out.", %{ config: config } do
-    Timeouts.notify_activity(session: "testid2")
-
-    :timer.sleep((config.timeout + 1) * 1000)
-    
-    Timeouts.notify_activity(session: "testid2")
-
-    lhf =
-      Timeouts.last_heard_from("testid2")
-
-    assert lhf != nil
-    assert not Timeouts.timed_out?(lhf, config.timeout)
-  end
-
-  test "Automatically removes timed-out sessions when running.", %{ config: config } do
     spawn &Timeouts.run/0
-    Timeouts.notify_activity(session: "testid3")
+    Timeouts.notify_activity(session: "testid2")
 
-    :timer.sleep((config.timeout + 1) * 1000)
+    :timer.sleep((config.timeout - 1) * 1000)
     
-    lhf =
-      Timeouts.last_heard_from("testid3")
+    Timeouts.notify_activity(session: "testid2")
 
-    assert lhf == nil
+    :timer.sleep(2000)
+
+    assert [] == Timeouts.timed_out()
   end
 end
