@@ -57,7 +57,7 @@ defmodule Patches.Timeout.Agent do
       Agent.get(__MODULE__, fn %{ config: %{ sleep: sleep } } -> sleep end)
 
     timed_out_sessions =
-      Agent.get_and_update(__MODULE__, fn
+      Agent.update(__MODULE__, fn
         state=%{ state: :stopped } ->
           {[], state}
 
@@ -72,21 +72,13 @@ defmodule Patches.Timeout.Agent do
             |> Enum.filter(fn {id, _lhf} -> Enum.find(timed_out, &( id == &1 )) == nil end)
             |> Enum.into(%{})
 
-          new_state =
-            %{
-              state |
-              sessions: new_sessions,
-              timed_out: state.timed_out ++ timed_out,
-            }
-
-          {timed_out, new_state}
+          %{
+            state |
+            sessions: new_sessions,
+            timed_out: state.timed_out ++ timed_out,
+          }
       end)
     
-    Enum.each(timed_out_sessions, fn session_id ->
-      RegistryAgent.terminate_session(session_id)
-      ServerAgent.terminate_session(session_id)
-    end)
-
     :timer.sleep(time_to_sleep * 1000)
     run()
   end

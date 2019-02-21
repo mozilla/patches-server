@@ -11,14 +11,22 @@ defmodule Patches.Application do
   alias Patches.StreamRegistry.Agent.Config, as: VulnStreamsConfig
 
   def start(_type, _args) do
-    children = [
-      {Plug.Cowboy, scheme: :http, plug: Patches.WebServer, options: [port: 9001]},
-      {Sessions, %SessionsConfig{}},
-      {VulnStreams, %VulnStreamsConfig{}},
-      {Timeouts, %TimeoutsConfig{}},
-    ]
+    children =
+      [
+        {Plug.Cowboy, scheme: :http, plug: Patches.WebServer, options: [port: 9001]},
+        {Sessions, %SessionsConfig{}},
+        {VulnStreams, %VulnStreamsConfig{}},
+        {Timeouts, %TimeoutsConfig{}},
+      ]
 
-    opts = [strategy: :one_for_one, name: Patches.Supervisor]
-    Supervisor.start_link(children, opts)
+    opts =
+      [strategy: :one_for_one, name: Patches.Supervisor]
+
+    resp =
+      Supervisor.start_link(children, opts)
+
+    Timeouts.run()
+
+    resp
   end
 end

@@ -105,18 +105,13 @@ defmodule Patches.StreamRegistry.Agent do
   end
 
   @doc """
-  Shift the cache window of each cache being managed forward.
+  Shift a cache window forward.
   """
-  def update_caches() do
+  def update_cache(platform) do
     Agent.update(__MODULE__, fn %{ config: cfg, registry: reg } ->
-      new_registry =
-        Enum.reduce(Map.keys(reg.caches), reg, fn (platform, registry) ->
-          Registry.update_cache(registry, platform, cfg.max_window_length)
-        end)
-
       %{
         config: cfg,
-        registry: new_registry,
+        registry: Registry.update_cache(reg, platform, cfg.max_window_length),
       }
     end)
   end

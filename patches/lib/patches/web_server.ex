@@ -16,7 +16,7 @@ defmodule Patches.WebServer do
       conn
       |> Map.get(:query_string)
       |> Plug.Conn.Query.decode()
-   
+
     case query do
       %{ "requestID" => req_id } ->
         serve_vulnerabilities(conn, req_id)
@@ -27,6 +27,8 @@ defmodule Patches.WebServer do
       _ ->
         error(conn)
     end
+
+    cleanup()
   end
 
   defp serve_vulnerabilities(conn, req_id) do
@@ -70,5 +72,26 @@ defmodule Patches.WebServer do
       Poison.encode(%{ "Error" => @missing_params_msg })
 
     send_resp(conn, 400, error)
+  end
+
+  defp cleanup() do
+    timed_out_sessions =
+      Timeouts.timed_out()
+
+    platforms_being_scanned =
+      ServerAgent.active()
+      |> Enum.map(&Map.get(&1, :platform))
+      |> Enum.uniq()
+
+    Enum.each(timed_out_sessions, fn session_id ->
+      RegistryAgent.terminate_session(session_id)
+      ServerAgent.terminate_session(session_id)
+    end)
+
+    Enum.each(platforms_being_scanned, fn platform ->
+      if RegistryAgent.all_sessions_complete?(platform) do
+        RegistryAgent.update_cache(platform)
+      end
+    end)
   end
 end
