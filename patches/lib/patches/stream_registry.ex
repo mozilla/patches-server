@@ -59,7 +59,7 @@ defmodule Patches.StreamRegistry do
   def register_sessions(%{ caches: caches, sessions: sessions }, [
     platform: platform,
     collection: collection,
-    sessions: new_sessions,
+    sessions: session_ids,
     window_length: window_length,
   ]) do
     new_cache =
@@ -73,8 +73,8 @@ defmodule Patches.StreamRegistry do
       }
 
     new_session_states =
-      new_sessions
-      |> Enum.map(fn %{ id: id } -> {id, new_state} end)
+      session_ids
+      |> Enum.map(fn id -> {id, new_state} end)
       |> Enum.into(%{})
 
     %{

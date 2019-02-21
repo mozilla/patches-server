@@ -24,26 +24,17 @@ defmodule Patches.StreamRegistry.AgentTest do
 
   test "can instruct to activated sessions" do
     sessions =
-      [
-        %Patches.Server.Session{ platform: "discarded", id: "test1" },
-        %Patches.Server.Session{ platform: "discarded", id: "test2" },
-      ]
+      [ "test1", "test2" ]
 
     assert SRAgent.register_sessions("ubuntu:18.04", [1,2,3,4,5], sessions) == :ok
   end
 
   test "can retrieve values from an appropriate cache" do
     sessions1 =
-      [
-        %Patches.Server.Session{ platform: "discarded", id: "test1" },
-        %Patches.Server.Session{ platform: "discarded", id: "test2" },
-      ]
+      [ "test1", "test2" ]
     
     sessions2 =
-      [
-        %Patches.Server.Session{ platform: "discarded", id: "test3" },
-        %Patches.Server.Session{ platform: "discarded", id: "test4" },
-      ]
+      [ "test3", "test4" ]
     
     SRAgent.register_sessions("ubuntu:18.04", [1,2,3,4,5], sessions1)
     SRAgent.register_sessions("alpine:3.4", [6,7,8], sessions2)
@@ -54,10 +45,7 @@ defmodule Patches.StreamRegistry.AgentTest do
 
   test "can limit the maximum window size over a collection when sessions are registered" do
     sessions =
-      [
-        %Patches.Server.Session{ platform: "discarded", id: "test1" },
-        %Patches.Server.Session{ platform: "discarded", id: "test2" },
-      ]
+      [ "test1", "test2" ]
 
     SRAgent.register_sessions("ubuntu:18.04", [1,2,3,4,5], sessions, 3)
 
@@ -67,10 +55,7 @@ defmodule Patches.StreamRegistry.AgentTest do
 
   test "can limit the number of values retrieved from a cache" do
     sessions =
-      [
-        %Patches.Server.Session{ platform: "discarded", id: "test1" },
-        %Patches.Server.Session{ platform: "discarded", id: "test2" },
-      ]
+      [ "test1", "test2" ]
 
     SRAgent.register_sessions("ubuntu:18.04", [1,2,3,4,5], sessions)
 
@@ -80,10 +65,7 @@ defmodule Patches.StreamRegistry.AgentTest do
 
   test "multiple calls to retrieve progress through the cache window" do
     sessions =
-      [
-        %Patches.Server.Session{ platform: "discarded", id: "test1" },
-        %Patches.Server.Session{ platform: "discarded", id: "test2" },
-      ]
+      [ "test1", "test2" ]
 
     SRAgent.register_sessions("ubuntu:18.04", [1,2,3,4,5], sessions)
 
@@ -93,10 +75,7 @@ defmodule Patches.StreamRegistry.AgentTest do
 
   test "after reading an entire window, calls to retrieve return an empty list" do
     sessions =
-      [
-        %Patches.Server.Session{ platform: "discarded", id: "test1" },
-        %Patches.Server.Session{ platform: "discarded", id: "test2" },
-      ]
+      [ "test1", "test2" ]
 
     SRAgent.register_sessions("ubuntu:18.04", [1,2,3,4,5], sessions)
     SRAgent.retrieve("test1")
@@ -106,7 +85,7 @@ defmodule Patches.StreamRegistry.AgentTest do
 
   test "can update the collection maintained by a cache identified by a platform" do
     session =
-      %Patches.Server.Session{ platform: "discarded", id: "test1" }
+      "test1"
 
     SRAgent.register_sessions("ubuntu:18.04", [1,2,3], [session])
     
@@ -117,7 +96,7 @@ defmodule Patches.StreamRegistry.AgentTest do
   
   test "after updating a cache's collection, the view retains our previous position" do
     session =
-      %Patches.Server.Session{ platform: "discarded", id: "test1" }
+      "test1"
 
     SRAgent.register_sessions("ubuntu:18.04", [1,2,3,4,5], [session])
     SRAgent.retrieve("test1", 2)
@@ -129,10 +108,10 @@ defmodule Patches.StreamRegistry.AgentTest do
 
   test "can update caches in different ways depending on the platform identifying them" do
     session1 =
-      %Patches.Server.Session{ platform: "discarded", id: "test1" }
+      "test1"
     
     session2 =
-      %Patches.Server.Session{ platform: "discarded", id: "test2" }
+      "test2"
 
     SRAgent.register_sessions("ubuntu:18.04", [1,2,3], [session1])
     SRAgent.register_sessions("alpine:3.4", [1,2,3], [session2])
@@ -151,10 +130,10 @@ defmodule Patches.StreamRegistry.AgentTest do
 
   test "can query to determine if all sessions are complete" do
     session1 =
-      %Patches.Server.Session{ platform: "discarded", id: "test1" }
+      "test1"
     
     session2 =
-      %Patches.Server.Session{ platform: "discarded", id: "test2" }
+      "test2"
 
     SRAgent.register_sessions("ubuntu:18.04", [1,2,3,4,5], [session1])
     SRAgent.register_sessions("alpine:3.4", [1,2,3,4,5], [session2])
@@ -166,10 +145,10 @@ defmodule Patches.StreamRegistry.AgentTest do
   
   test "all sessions reported complete only after each has read all values" do
     session1 =
-      %Patches.Server.Session{ platform: "discarded", id: "test1" }
+      "test1"
     
     session2 =
-      %Patches.Server.Session{ platform: "discarded", id: "test2" }
+      "test2"
 
     SRAgent.register_sessions("ubuntu:18.04", [1,2,3,4,5], [session1])
     SRAgent.register_sessions("alpine:3.4", [1,2,3,4,5], [session2])
@@ -180,10 +159,10 @@ defmodule Patches.StreamRegistry.AgentTest do
   
   test "can query to determine if all sessions for a specific platform are complete" do
     session1 =
-      %Patches.Server.Session{ platform: "discarded", id: "test1" }
+      "test1"
     
     session2 =
-      %Patches.Server.Session{ platform: "discarded", id: "test2" }
+      "test2"
 
     SRAgent.register_sessions("ubuntu:18.04", [1,2,3,4,5], [session1])
     SRAgent.register_sessions("alpine:3.4", [1,2,3,4,5], [session2])

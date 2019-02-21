@@ -45,6 +45,6 @@ defmodule Patches.Server.AgentTest do
     activated =
       ServerAgent.activate_sessions()
 
-    assert activated == 1
+    assert Enum.count(activated) == 1
   end
 end

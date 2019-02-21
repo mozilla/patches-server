@@ -24,7 +24,7 @@ defmodule Patches.StreamRegistryTest do
         reg,
         platform: platform,
         collection: [1,2,3,4,5],
-        sessions: sessions,
+        sessions: Enum.map(sessions, &Map.get(&1, :id)),
         window_length: window_len)
     end)
   end

@@ -65,6 +65,9 @@ defmodule Patches.Server do
       |> Enum.take(limit)
       |> Enum.into(%{})
 
+    active_session_ids =
+      Enum.map(active_sessions, fn {id, _sesssion} -> id end)
+
     queued_sessions =
       sessions_by_created_at
       |> Enum.drop(limit)
@@ -76,7 +79,7 @@ defmodule Patches.Server do
         queued_sessions: queued_sessions,
       }
 
-    {Enum.count(active_sessions), new_server}
+    {active_session_ids, new_server}
   end
 
   @doc """

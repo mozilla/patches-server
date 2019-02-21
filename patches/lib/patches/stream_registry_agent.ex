@@ -39,6 +39,12 @@ defmodule Patches.StreamRegistry.Agent do
   @doc """
   Create a new cache window over a provided `collection` identified by `platform`.
   Only the given `sessions` will be granted access to values in this collection.
+
+  ## Arguments
+
+  1. `platform` is the name of the platform to get vulns for, e.g. ubuntu:18.04
+  2. `collection` is the collection of vulns to create a window over
+  3. `sessions` is a list of session IDs
   """
   def register_sessions(platform, collection, sessions) do
     %{ max_window_length: limit } =

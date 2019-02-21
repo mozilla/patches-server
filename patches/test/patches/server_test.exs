@@ -36,7 +36,7 @@ defmodule Patches.ServerTest do
       end)
       |> Server.activate_sessions(1)
 
-    assert activated == 1
+    assert Enum.count(activated) == 1
     assert Enum.count(server.active_sessions) == 1
     assert Enum.count(server.queued_sessions) == 2
   end
