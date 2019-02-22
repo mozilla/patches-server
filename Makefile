@@ -2,6 +2,9 @@ all:
 	@echo 'Available make targets:'
 	@grep '^[^#[:space:]^\.PHONY.*].*:' Makefile
 
+server:
+	docker run -p 9002:9002 -t mozilla/patches-server-dev python patches_server/patches_server.py
+
 docker-image:
 	docker build -t mozilla/patches-server-dev:latest .
 
