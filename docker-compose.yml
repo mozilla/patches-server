@@ -19,5 +19,17 @@ services:
       - postgres
     volumes:
       - /tmp:/tmp
-      - ./clair_config:/config
+      - ./clair:/config
     command: [-config, /config/config.yaml]
+
+  patches:
+    container_name: patches_server
+    image: mozilla/patches-server
+    restart: unless-stopped
+    depends_on:
+      - clair
+    links:
+      - clair
+    expose:
+      - "9002:9002"
+    command: [python, patches_server/patches_server.py]
