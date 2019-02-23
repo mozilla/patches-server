@@ -3,8 +3,11 @@
 
 """Tests for `patches_server` package."""
 
-import pytest
 
+import sys
+sys.path.append('../')
+
+import pytest
 
 from patches_server import patches_server
 

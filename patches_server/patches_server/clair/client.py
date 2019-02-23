@@ -81,12 +81,10 @@ def _to_vulnerability(platform, description_json):
     patches.Vulnerability.
     '''
 
-    is_vuln = match(description_json, {
-        'Name': str,
-        'Link': str,
-        'Severity': str,
-        'FixedIn': [dict],
-    })
+    is_vuln = all([
+        key in description_json
+        for key in [ 'Name', 'Link', 'Severity', 'FixedIn' ]
+    ])
 
     if not is_vuln:
         return None
@@ -126,10 +124,7 @@ def _to_package(package_json):
     patches.Package.
     '''
 
-    is_package = matches(package_json, {
-        'Name': str,
-        'Version': str,
-    })
+    is_package = 'Name' in package_json and 'Version' in package_json
 
     if not is_package:
         return None
