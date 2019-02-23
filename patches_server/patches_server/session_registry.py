@@ -1,5 +1,5 @@
-from dataclasses import dataclass, timedelta
-from datetime import datetime
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import Dict
 
@@ -62,28 +62,98 @@ class SessionRegistry:
 
     max_active_sessions: int
     max_queued_sessions: int
-    _registry: Dict[str, SessionState] = {}
+    _registry: Dict[str, SessionState] = field(default_factory=dict)
 
     def timed_out(self, timeout_seconds):
+        '''Determine which sessions have expired.
+        Returns a list of the ids of sessions found to be expired.
         '''
-        '''
+
+        return [
+            session_id
+            for _index, (session_id, session_state) in enumerate(self._registry.items())
+            if session_state.is_expired(timeout_seconds)
+        ]
 
 
     def notify_activity(self, session_id):
+        '''Update a session to indicate that it is still active.
+        Returns True if the session exists, or else False.
         '''
-        '''
+
+        if session_id not in self._registry:
+            return False
+
+        old_state = self._registry[session_id] 
+        self._registry[session_id] = old_state.notify_activity()
+
+        return True
 
 
     def queue(self, session_id, platform):
+        '''Queue a new session for a scanner running on a given platform.
+        Returns True if there was room to queue the session, or else False.
         '''
-        '''
+
+        queued = [
+            session
+            for _index, (session_id, session) in enumerate(self._registry.items())
+            if session.state == ActivityState.QUEUED
+        ]
+
+        already_registered = session_id in self._registry
+
+        if len(queued) >= self.max_queued_sessions or already_registered:
+            return False
+
+        self._registry[session_id] = SessionState(platform)
+
+        return True
 
 
     def activate(self, max=None):
+        '''Mark up to a maximum number of sessions as active.
+        Returns a list of IDs of sessions that were activated.
         '''
-        '''
+
+        active = [
+            session
+            for _index, (session_id, session) in enumerate(self._registry.items())
+            if session.state == ActivityState.ACTIVE
+        ]
+
+        queued = [
+            [ session_id, session ]
+            for _index, (session_id, session) in enumerate(self._registry.items())
+            if session.state == ActivityState.QUEUED
+        ]
+
+        queued_by_created_at = sorted(queued, key=lambda pair: pair[1].created_at)
+
+        num_to_activate = min([
+            self.max_active_sessions - len(active),
+            max if max is not None else self.max_active_sessions,
+            len(queued),
+        ])
+
+        to_activate = queued_by_created_at[:num_to_activate]
+
+        for id_session_pair in to_activate:
+            [ session_id, session ] = id_session_pair
+            new_session = session.activate()
+            self._registry[session_id] = new_session
+
+        return [ pair[0] for pair in to_activate ]
 
 
     def terminate(self, session_id):
+        '''Terminate a session, removing it from the registry.
+        Returns True if the session existed or else False.
         '''
-        '''
+
+        if session_id not in self._registry:
+            return False
+
+        self._registry.pop(session_id)
+
+        return True

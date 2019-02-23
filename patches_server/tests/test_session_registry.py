@@ -1,11 +1,8 @@
-import sys
-sys.path.append('../')
-
 import time
 
 import pytest
 
-from patches_server.session_registry import \
+from patches_server.patches_server.session_registry import \
     ActivityState, SessionState, SessionRegistry
 
 
@@ -15,9 +12,9 @@ def test_timed_out():
     registry.queue('test1', 'ubuntu:18.04')
     registry.queue('test2', 'ubuntu:18.04')
 
-    time.sleep(1)
+    time.sleep(1.5)
 
-    assert registry.timed_out() == [ 'test1', 'test2' ]
+    assert registry.timed_out(1) == [ 'test1', 'test2' ]
 
 
 def test_notify_activity():
@@ -50,7 +47,7 @@ def test_activate():
 
     registry.terminate('test1')
 
-    registry.queue('test1') 
+    registry.queue('test1', 'alpine3.4') 
 
     assert registry.activate() == [ 'test2' ]
 
