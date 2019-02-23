@@ -73,7 +73,7 @@ class SessionRegistry:
 
         return [
             id
-            for _index, (id, session) in enumerate(self._registry.items())
+            for (id, session) in self._registry.items()
             if session.is_expired(timeout_seconds)
         ]
 
@@ -90,7 +90,7 @@ class SessionRegistry:
 
         return [
             id
-            for _index, (id, session) in enumerate(self._registry.items())
+            for (id, session) in self._registry.items()
             if session.state == ActivityState.ACTIVE and\
                 (N(read_at_least) or session.vulns_read >= read_at_least) and\
                 (N(platform) or session.scanning_platform == platform)
@@ -120,7 +120,7 @@ class SessionRegistry:
 
         queued = [
             session
-            for _index, (_id, session) in enumerate(self._registry.items())
+            for (_id, session) in self._registry.items()
             if session.state == ActivityState.QUEUED
         ]
 
@@ -141,13 +141,13 @@ class SessionRegistry:
 
         active = [
             session
-            for _index, (_id, session) in enumerate(self._registry.items())
+            for (_id, session) in self._registry.items()
             if session.state == ActivityState.ACTIVE
         ]
 
         queued = [
             [ id, session ]
-            for _index, (id, session) in enumerate(self._registry.items())
+            for (id, session) in self._registry.items()
             if session.state == ActivityState.QUEUED
         ]
 
