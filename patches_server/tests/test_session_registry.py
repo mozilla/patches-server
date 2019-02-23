@@ -26,6 +26,25 @@ def test_notify_activity():
     assert not registry.notify_activity('test2')
 
 
+def test_active():
+    registry = SessionRegistry(2, 3)
+
+    registry.queue('test1', 'ubuntu:18.04')
+    registry.queue('test2', 'alpine:3.4')
+    registry.queue('test3', 'alpine:3.4')
+
+    registry.activate_sessions()
+
+    registry.notify_activity('test1', read_vulns=10)
+    registry.notify_activity('test2', read_vulns=5)
+
+    print(registry._registry)
+    assert registry.active(read_at_least=5, platform='ubuntu:18.04') == [ 'test1' ]
+    assert registry.active(read_at_least=10, platform='ubuntu:18.04') == [ 'test1' ]
+    assert registry.active(read_at_least=3, platform='alpine:3.4') == [ 'test2' ]
+    assert registry.active(read_at_least=10, platform='alpine:3.4') == []
+
+
 def test_queue():
     registry = SessionRegistry(1, 3)
 
@@ -36,20 +55,20 @@ def test_queue():
     assert not registry.queue('test4', 'ubuntu:18.04')
 
 
-def test_activate():
+def test_activate_sessions():
     registry = SessionRegistry(1, 3)
 
     registry.queue('test1', 'ubuntu:18.04')
     registry.queue('test2', 'ubuntu:18.04')
 
-    assert registry.activate() == [ 'test1' ]
-    assert registry.activate() == []
+    assert registry.activate_sessions() == [ 'test1' ]
+    assert registry.activate_sessions() == []
 
     registry.terminate('test1')
 
     registry.queue('test1', 'alpine3.4') 
 
-    assert registry.activate() == [ 'test2' ]
+    assert registry.activate_sessions() == [ 'test2' ]
 
 
 def test_terminate():

@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
+from functools import reduce
 from typing import Dict
 
 
@@ -34,12 +35,13 @@ class SessionState:
         return self.last_heard_from + delta <= datetime.utcnow()
 
     
-    def notify_activity(self):
+    def notify_activity(self, read_vulns=0):
         '''Update the session state's record of the last time the owner was
         heard from with the current time.
         '''
 
         self.last_heard_from = datetime.utcnow()
+        self.vulns_read += read_vulns
 
         return self
 
@@ -70,13 +72,32 @@ class SessionRegistry:
         '''
 
         return [
-            session_id
-            for _index, (session_id, session_state) in enumerate(self._registry.items())
-            if session_state.is_expired(timeout_seconds)
+            id
+            for _index, (id, session) in enumerate(self._registry.items())
+            if session.is_expired(timeout_seconds)
         ]
 
 
-    def notify_activity(self, session_id):
+    def active(self, read_at_least=None, platform=None):
+        '''Determine which sessions are active and, optionally, satisfy either
+        or both of the following conditions:
+
+            * have read at least some number of vulns
+            * are scanning on a particular platform
+        '''
+
+        N = lambda a: a is None
+
+        return [
+            id
+            for _index, (id, session) in enumerate(self._registry.items())
+            if session.state == ActivityState.ACTIVE and\
+                (N(read_at_least) or session.vulns_read >= read_at_least) and\
+                (N(platform) or session.scanning_platform == platform)
+        ]
+
+
+    def notify_activity(self, session_id, read_vulns=0):
         '''Update a session to indicate that it is still active.
         Returns True if the session exists, or else False.
         '''
@@ -84,8 +105,10 @@ class SessionRegistry:
         if session_id not in self._registry:
             return False
 
-        old_state = self._registry[session_id] 
-        self._registry[session_id] = old_state.notify_activity()
+        new_state = self._registry[session_id]\
+            .notify_activity(read_vulns=read_vulns)
+
+        self._registry[session_id] = new_state
 
         return True
 
@@ -97,7 +120,7 @@ class SessionRegistry:
 
         queued = [
             session
-            for _index, (session_id, session) in enumerate(self._registry.items())
+            for _index, (_id, session) in enumerate(self._registry.items())
             if session.state == ActivityState.QUEUED
         ]
 
@@ -111,24 +134,25 @@ class SessionRegistry:
         return True
 
 
-    def activate(self, max=None):
+    def activate_sessions(self, max=None):
         '''Mark up to a maximum number of sessions as active.
         Returns a list of IDs of sessions that were activated.
         '''
 
         active = [
             session
-            for _index, (session_id, session) in enumerate(self._registry.items())
+            for _index, (_id, session) in enumerate(self._registry.items())
             if session.state == ActivityState.ACTIVE
         ]
 
         queued = [
-            [ session_id, session ]
-            for _index, (session_id, session) in enumerate(self._registry.items())
+            [ id, session ]
+            for _index, (id, session) in enumerate(self._registry.items())
             if session.state == ActivityState.QUEUED
         ]
 
-        queued_by_created_at = sorted(queued, key=lambda pair: pair[1].created_at)
+        queued_by_created_at = sorted(
+            queued, key=lambda pair: pair[1].created_at)
 
         num_to_activate = min([
             self.max_active_sessions - len(active),
