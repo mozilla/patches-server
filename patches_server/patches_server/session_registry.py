@@ -138,8 +138,7 @@ class SessionRegistry:
 
         to_activate = queued_by_created_at[:num_to_activate]
 
-        for id_session_pair in to_activate:
-            [ session_id, session ] = id_session_pair
+        for [ session_id, session ] in to_activate:
             new_session = session.activate()
             self._registry[session_id] = new_session
 
