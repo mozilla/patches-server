@@ -124,9 +124,11 @@ class SessionRegistry:
             if session.state == ActivityState.QUEUED
         ]
 
+        limit_exceeded = len(queued) >= self.max_queued_sessions
+
         already_registered = session_id in self._registry
 
-        if len(queued) >= self.max_queued_sessions or already_registered:
+        if limit_exceeded or already_registered:
             return False
 
         self._registry[session_id] = SessionState(platform)
@@ -163,8 +165,7 @@ class SessionRegistry:
         to_activate = queued_by_created_at[:num_to_activate]
 
         for [ session_id, session ] in to_activate:
-            new_session = session.activate()
-            self._registry[session_id] = new_session
+            self._registry[session_id] = session.activate()
 
         return [ pair[0] for pair in to_activate ]
 

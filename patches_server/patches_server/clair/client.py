@@ -113,10 +113,7 @@ def _to_severity(sev_name):
         'Defcon': Severity.CRITICAL,
     }
 
-    if sev_name not in mapping:
-        return None
-
-    return mapping[sev_name]
+    return mapping.get(sev_name, Severity.UNKNOWN)
 
 
 def _to_package(package_json):
