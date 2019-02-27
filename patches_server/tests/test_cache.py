@@ -36,3 +36,20 @@ def test_retrieve():
     assert cache.retrieve('test', offset=3) == [4,5]
     assert cache.retrieve('test', limit=10000) == [1,2,3,4,5]
     assert cache.retrieve('test', offset=2, limit=1) == [3]
+
+    cache.cache('test', [6,7,8,9])
+
+    assert cache.retrieve('test', offset=5) == [6,7,8,9]
+    assert cache.retrieve('test', offset=2) == [6,7,8,9]
+    assert cache.retrieve('test', offset=8) == [9]
+
+
+def test_size():
+    cache = Cache()
+
+    cache.cache('test', [1,2])
+    cache.cache('test', [3,4,5])
+
+    assert cache.size('test') == 5
+
+    assert cache.size('test2') == 0
