@@ -4,7 +4,6 @@ from version 1 of the Clair API.
 See https://coreos.com/clair/docs/latest/api_v1.html for more information.
 '''
 
-from patches_server.fn import matches
 from patches_server.vulnerability import Vulnerability, Severity, Package
 
 import requests
