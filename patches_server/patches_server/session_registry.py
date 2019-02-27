@@ -77,6 +77,25 @@ class SessionRegistry:
             if session.is_expired(timeout_seconds)
         ]
 
+    
+    def lookup(self, session_id):
+        '''Search the registry for a session, returning a copy of its
+        ServerState if it exists, or else None.
+        '''
+
+        if session_id not in self._registry:
+            return None
+
+        state = self._registry[session_id]
+
+        return SessionState(
+            state.scanning_platform,
+            state.state,
+            state.created_at,
+            state.last_heard_from,
+            state.vulns_read,
+        )
+
 
     def active(self, read_at_least=None, platform=None):
         '''Determine which sessions are active and, optionally, satisfy either
