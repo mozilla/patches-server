@@ -23,6 +23,7 @@ structured like:
 ```
 '''
 
+import patches_server.clair.client as clair_client
 from patches_server.patches_server.vulnerability import \
     Package, Severity, Vulnerability
 
@@ -50,7 +51,11 @@ def is_supported(platform):
 
 
 def _init_clair(platform, config):
-    return None
+    clair = clair_client.new(platform, config['clair'])
+
+    while clair.has_vulns():
+        for vuln in clair.retrieve_vulns():
+            yield vuln
 
 
 def _init_stub(platform, config):

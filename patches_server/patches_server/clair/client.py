@@ -4,17 +4,74 @@ from version 1 of the Clair API.
 See https://coreos.com/clair/docs/latest/api_v1.html for more information.
 '''
 
-from patches_server.vulnerability import Vulnerability, Severity, Package
+from dataclasses import dataclass
+from typing import Optional
 
 import requests
+
+from patches_server.vulnerability import Vulnerability, Severity, Package
 
 
 _DEFAULT_BASE_ADDR = 'http://127.0.0.1:6060'
 
 
-def _client_state():
+@dataclass
+class Client:
+    '''An interface for fetching vulnerabilities from the Clair API.
     '''
+
+    platform: str
+    _base_addr: str = _DEFAULT_BASE_ADDR
+    _fetch_limit: int = 128
+    _next_page: Optional[str] = ''
+
+    def has_vulns(self):
+        '''Determine if the client has any more vulnerabilities to retrieve.
+        '''
+
+        return self._next_page is not None
+
+
+    def retrieve_vulns(self):
+        '''Retrieve vulnerabilities, returning a generator that will yield
+        each one as it's fetched from the Clair API.
+        '''
+
+        np = self._next_page
+        next_page = np if np not in ['', None] else None
+
+        pform = self.platform
+        baddr = self._base_addr
+        limit = self._fetch_limit
+            
+        summaries = _summaries(pform, baddr, limit, next_page)
+
+        self._next_page = summaries.get('NextPage', None)
+
+        def generator():
+            for summary in summaries:
+                name = summary.get('Name', None)
+
+                if name is None:
+                    continue
+
+                description = _description(pform, name, baddr)
+
+                yield _to_vulnerability(pform, description)
+
+        return generator
+
+
+def new(platform, config):
+    '''Construct a new Client to retrieve vulnerabilities affecting a particular
+    platform with optional configuration values.
     '''
+
+    base_addr = config.get('baseAddress', _DEFAULT_BASE_ADDR)
+
+    fetch_limit = config.get('fetchLimit', 128)
+
+    return Client(platform, base_addr, fetch_limit)
 
 
 def _summaries_url(
