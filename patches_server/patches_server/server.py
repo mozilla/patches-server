@@ -90,7 +90,11 @@ class ServerState:
 
         session_id = generate_id()
 
+        self._thread_safety_lock.acquire()
+
         did_queue = self._sessions.queue(session_id, platform)
+        
+        self._thread_safety_lock.release()
 
         if not did_queue:
             return None
@@ -115,12 +119,18 @@ class ServerState:
             limit=self._max_vulns_to_serve,
         )
 
+        self._thread_safety_lock.acquire()
+
         if vulns is None:
             self._sessions.notify_activity(session_id)
+
+            self._thread_safety_lock.release()
 
             return None
 
         self._sessions.notify_activity(session_id, read_vulns=len(vulns))
+
+        self._thread_safety_lock.release()
 
         return vulns
 
@@ -137,8 +147,10 @@ class ServerState:
         active = self._sessions.active()
 
         if len(active) == 0:
+            self._thread_safety_lock.acquire()
             self._sessions.activate_sessions()
             self._initialize_caches()
+            self._thread_safety_lock.release()
 
         active_platforms = list(set([
             self._sessions.lookup(session).scanning_platform
@@ -157,14 +169,18 @@ class ServerState:
             active = self._sessions.active(platform=platform)
 
             if len(active) == len(complete) and len(complete) > 0:
-                vulns = self._load_vulns(platform)
-
-                if len(vulns) > 0:
-                    self._cache.cache(platform, vulns)
-                else:
-                    self._cache.remove_bucket(platform)
-                    for session in complete:
-                        self._sessions.terminate(session)
+                self._thread_safety_lock.acquire()        # LOCK ACQUIRE
+                                                          # |
+                vulns = self._load_vulns(platform)        # |
+                                                          # |
+                if len(vulns) > 0:                        # |
+                    self._cache.cache(platform, vulns)    # |
+                else:                                     # |
+                    self._cache.remove_bucket(platform)   # |
+                    for session in complete:              # |
+                        self._sessions.terminate(session) # |
+                                                          # |
+                self._thread_safety_lock.release()        # LOCK RELEASE
 
 
     def _terminate_timed_out_sessions(self):
