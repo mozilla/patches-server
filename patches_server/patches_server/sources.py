@@ -23,7 +23,7 @@ structured like:
 ```
 '''
 
-import patches_server.clair.client as clair_client
+import patches_server.patches_server.clair.client as clair_client
 from patches_server.patches_server.vulnerability import \
     Package, Severity, Vulnerability
 

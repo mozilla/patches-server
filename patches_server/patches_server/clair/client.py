@@ -9,7 +9,8 @@ from typing import Optional
 
 import requests
 
-from patches_server.vulnerability import Vulnerability, Severity, Package
+from patches_server.patches_server.vulnerability import\
+    Vulnerability, Severity, Package
 
 
 _DEFAULT_BASE_ADDR = 'http://127.0.0.1:6060'
