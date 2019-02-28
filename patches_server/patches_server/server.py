@@ -132,18 +132,6 @@ class ServerState:
         caches are kept fresh.
         '''
 
-        '''
-        1. Remove any sessions that have timed out
-        2. If no sessions are active, activate some
-            2.1. Activate sources for each platform being scanned
-            2.2. Initialize the cache for each platform
-        3. If there are vulns in the cache and all sessions have read all of them
-            3.1. If there are more vulnerabilities to serve
-                3.1.1. Update the cache
-            3.2. Otherwise
-                3.2.1. Terminate all completed sessions
-        '''
-
         self._terminate_timed_out_sessions()
 
         active = self._sessions.active()
@@ -180,9 +168,6 @@ class ServerState:
 
 
     def _terminate_timed_out_sessions(self):
-        '''
-        '''
-
         timed_out = self._sessions.timed_out(self._session_timeout_seconds)
 
         for session_id in timed_out:
@@ -190,9 +175,6 @@ class ServerState:
 
 
     def _initialize_caches(self):
-        '''
-        '''
-
         active_platforms = list(set([
             self._sessions.lookup(session).scanning_platform
             for session in self._sessions.active()
@@ -211,9 +193,6 @@ class ServerState:
 
 
     def _load_vulns(self, platform):
-        '''
-        '''
-
         vulns = []
 
         while len(vulns) < self._max_vulns_to_serve:
