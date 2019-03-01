@@ -4,6 +4,7 @@ the state handled between requests by the Patches-Server application.
 
 from dataclasses import dataclass, field
 from os import urandom
+import sys
 from threading import Lock
 from typing import Dict, Generator
 
@@ -144,11 +145,14 @@ class ServerState:
         caches are kept fresh.
         '''
 
+        print('Updating', file=sys.stderr)
+
         self._terminate_timed_out_sessions()
 
         active = self._sessions.active()
 
         if len(active) == 0:
+            print('No active sessions. Initializing', file=sys.stderr)
             self._thread_safety_lock.acquire()
             self._sessions.activate_sessions()
             self._initialize_caches()
@@ -160,6 +164,7 @@ class ServerState:
         ]))
 
         for platform in active_platforms:
+            print(f'Updating for platform {platform}', file=sys.stderr)
             cache_size = self._cache.size(platform)
 
             if cache_size == 0:
@@ -171,13 +176,16 @@ class ServerState:
             active = self._sessions.active(platform=platform)
 
             if len(active) == len(complete) and len(complete) > 0:
+                print('Active sessions are complete.', file=sys.stderr)
                 self._thread_safety_lock.acquire()        # LOCK ACQUIRE
                                                           # |
                 vulns = self._load_vulns(platform)        # |
                                                           # |
                 if len(vulns) > 0:                        # |
+                    print(f'Updating cache with {len(vulns)} vulns', file=sys.stderr)
                     self._cache.cache(platform, vulns)    # |
                 else:                                     # |
+                    print('Terminating sessions', file=sys.stderr)
                     self._cache.remove_bucket(platform)   # |
                     for session in complete:              # |
                         self._sessions.terminate(session) # |

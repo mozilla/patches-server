@@ -26,6 +26,8 @@ def api():
     platform = request.args.get('platform', None)
     session = request.args.get('session', None)
 
+    STATE.update()
+
     if session is not None:
         return _vulns(session)
     elif platform is not None:
@@ -38,24 +40,45 @@ def _vulns(session_id):
     '''Retrieve vulnerabilities available for a scanner with an active session.
     '''
 
+    vulns = STATE.retrieve_vulns(session_id)
+
+    if vulns is None:
+        body = json.dumps({
+            'error': 'There are no vulnerabilities available for you at this'\
+                ' time. Check that your session ID is correct and try again'\
+                ' later.'
+        })
+
+        return ( body, 400, { 'Content-Type': 'application/json' } )
+
     body = json.dumps({
         'error': None,
-        'vulnerabilities': [],
+        'vulnerabilities': vulns,
     })
     
-    return (body, 200, { 'Content-Type': 'application/json' })
+    return ( body, 200, { 'Content-Type': 'application/json' } )
 
 
 def _new_session(platform):
     '''Create a new session for a scanner running on a particular platform.
     '''
 
+    session_id = STATE.queue_session(platform)
+
+    if session_id is None:
+        body = json.dumps({
+            'error': 'Could not create session. Check that your' \
+                ' platform is supported and try again later'
+        })
+
+        return ( body, 400, { 'Content-Type': 'application/json' } )
+
     body = json.dumps({
         'error': None,
-        'session': 'testing',
+        'session': session_id,
     })
     
-    return (body, 200, { 'Content-Type': 'application/json' })
+    return ( body, 200, { 'Content-Type': 'application/json' } )
 
 
 def _error():
