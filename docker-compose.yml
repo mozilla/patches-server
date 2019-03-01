@@ -26,11 +26,10 @@ services:
   patches:
     container_name: patches_server
     image: mozilla/patches-server-dev:latest
-    restart: unless-stopped
     depends_on:
       - clair
     links:
       - clair
     ports:
       - "9002:9002"
-    command: [python, patches_server/patches_server.py]
+    command: [python, patches_server/main.py]

@@ -1,9 +1,9 @@
 import sys
-sys.path.insert(0, '../')
+sys.path.insert(0, '../patches_server/patches_server')
 
 import pytest
 
-from patches_server.patches_server.cache import Cache
+from cache import Cache
 
 
 def test_cache():

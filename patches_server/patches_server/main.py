@@ -4,8 +4,11 @@ import json
 
 from flask import Flask, request
 
+from server import ServerState
+
 
 APP = Flask('patches_server')
+STATE = ServerState()
 
 
 @APP.route("/", methods=[ 'GET' ])
@@ -69,4 +72,19 @@ def _error():
 
 
 if __name__ == '__main__':
+    config = {
+        'maxActiveSessions': 4,
+        'maxQueuedSessions': 16,
+        'sessionTimeoutSeconds': 10,
+        'maxVulnsToServe': 32,
+        'sources': {
+            'clair': {
+                'baseAddress': 'http://127.0.0.1:6060',
+                'fetchLimit': 32,
+            }
+        }
+    }
+
+    STATE = STATE.configure(config)
+
     APP.run(host='0.0.0.0', port=9002)

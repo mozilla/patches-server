@@ -1,9 +1,11 @@
+import sys
+sys.path.insert(0, '../patches_server/patches_server')
+
 import time
 
 import pytest
 
-from patches_server.patches_server.session_registry import \
-    ActivityState, SessionState, SessionRegistry
+from session_registry import ActivityState, SessionState, SessionRegistry
 
 
 def test_timed_out():

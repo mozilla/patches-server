@@ -23,9 +23,8 @@ structured like:
 ```
 '''
 
-import patches_server.patches_server.clair.client as clair_client
-from patches_server.patches_server.vulnerability import \
-    Package, Severity, Vulnerability
+import clair.client as clair_client
+from vulnerability import Package, Severity, Vulnerability
 
 
 def init(platform, config):

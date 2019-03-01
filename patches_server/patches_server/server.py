@@ -7,10 +7,10 @@ from os import urandom
 from threading import Lock
 from typing import Dict, Generator
 
-from patches_server.patches_server.cache import Cache
-from patches_server.patches_server.session_registry import SessionRegistry
-import patches_server.patches_server.sources as sources
-from patches_server.patches_server.vulnerability import Vulnerability 
+from cache import Cache
+from session_registry import SessionRegistry
+import sources as sources
+from vulnerability import Vulnerability 
 
 
 @dataclass
@@ -57,6 +57,8 @@ class ServerState:
 
         * baseAddress: str, the base url pointing to a Clair instance.
         e.g. http://127.0.0.1:6060
+        * fetchLimit: int, the maximum number of vulns to fetch in a single call
+        to Client.retrieve_vulns.
         '''
 
         if 'sources' not in config:

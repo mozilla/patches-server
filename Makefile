@@ -14,5 +14,5 @@ run-python:
 run-pytest: docker-image
 	docker run -t mozilla/patches-server-dev pytest
 
-run-server:
+run-server: docker-image
 	docker-compose up
