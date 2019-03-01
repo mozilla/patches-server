@@ -9,7 +9,7 @@ from threading import Lock
 from typing import Dict, Generator
 
 from cache import Cache
-from session_registry import SessionRegistry
+from session_registry import ActivityState, SessionRegistry
 import sources as sources
 from vulnerability import Vulnerability 
 
@@ -114,6 +114,13 @@ class ServerState:
         state = self._sessions.lookup(session_id)
 
         if state is None:
+            return None
+
+        if state.state == ActivityState.QUEUED:
+            self._thread_safety_lock.acquire()
+            self._sessions.notify_activity(session_id)
+            self._thread_safety_lock.release()
+
             return None
 
         vulns = self._cache.retrieve(
