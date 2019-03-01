@@ -108,6 +108,6 @@ if __name__ == '__main__':
         }
     }
 
-    STATE = STATE.configure(config)
+    STATE.configure(config)
 
     APP.run(host='0.0.0.0', port=9002)
