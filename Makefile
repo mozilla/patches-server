@@ -11,8 +11,13 @@ run-shell:
 run-python:
 	docker run -it mozilla/patches-server-dev python
 
-run-pytest: docker-image
+run-unit-tests: docker-image
 	docker run -t mozilla/patches-server-dev pytest
+
+run-all-tests: docker-image
+	docker-compose up -d
+	docker run -t mozilla/patches-server-dev pytest
+	docker-compose stop
 
 run-server: docker-image
 	docker-compose up
