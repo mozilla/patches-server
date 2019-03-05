@@ -16,7 +16,7 @@ run-unit-tests: docker-image
 
 run-all-tests: docker-image
 	docker-compose up -d
-	docker run -t mozilla/patches-server-dev pytest
+	docker exec -t patches_server pytest
 	docker-compose stop
 
 run-server: docker-image

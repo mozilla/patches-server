@@ -25,7 +25,7 @@ def stateful(test_fn, server=_DEFAULT_ADDR):
             if resp_data.get('error', None) is not None:
                 print('Calling test fn', file=sys.stderr)
                 return test_fn(*args, **kwargs)
-        except requests.ConnectionError:
+        except Exception:
             print('Not calling test function', file=sys.stderr)
             return None
     

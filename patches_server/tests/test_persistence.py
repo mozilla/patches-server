@@ -9,15 +9,16 @@ from util import stateful
 
 #@stateful
 def test_handling_valid_sessions():
-    assert False
     print('in test_handling_valid_sessions', file=sys.stderr)
-    session_id = requests.get('http://127.0.0.1:6060?platform=ubuntu:18.04')\
+    session_id = requests.get('http://127.0.0.1:9002/?platform=ubuntu:18.04')\
         .json()\
         .get('session', None)
 
     assert session_id is not None
 
-    vulns = requests.get(f'http://127.0.0.1:6060?session={session_id}')\
+    print(f'got session_id {session_id}')
+
+    vulns = requests.get(f'http://127.0.0.1:9002/?session={session_id}')\
         .json()\
         .get('vulnerabilities', None)
 
