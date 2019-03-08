@@ -4,10 +4,10 @@ sys.path.insert(0, '../patches_server/patches_server')
 import pytest
 import requests
 
-from util import stateful
+from util import needs_patches_server, needs_redis
 
 
-#@stateful
+@needs_patches_server
 def test_handling_valid_sessions():
     print('in test_handling_valid_sessions', file=sys.stderr)
     session_id = requests.get('http://127.0.0.1:9002/?platform=ubuntu:18.04')\

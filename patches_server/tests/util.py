@@ -1,32 +1,42 @@
-'''This module exports a function decorator `stateful` that can be used to
-mark tests as only being desirable to run when the Patches' web server is
-running.
-'''
-
 import sys
 
+import redis
 import requests
 
 
 _DEFAULT_ADDR = 'http://127.0.0.1:9002'
 
 
-def stateful(test_fn, server=_DEFAULT_ADDR):
-    '''A function decorator that will assert that the Patches-Server is
-    responding to requests before invoking the wrapped function.
+def needs_redis(test_fn, host='127.0.0.1', port=6379, password=None):
+    '''A function decorator that will assert that we can connect to Redis
+    before running a test.
     '''
 
-    print('Calling stateful', file=sys.stderr)
-    print('Calling stateful')
     def wrapper(*args, **kwargs):
         try:
-            response = requests.get(server)
-            resp_data = response.json()
-            if resp_data.get('error', None) is not None:
-                print('Calling test fn', file=sys.stderr)
-                return test_fn(*args, **kwargs)
+            if password is None:
+                redis.Redis(host=host, port=port)
+            else:
+                redis.Redis(host=host, port=port, password=password)
         except Exception:
-            print('Not calling test function', file=sys.stderr)
             return None
-    
+        else:
+            return test_fn(*args, **kwargs)
+
     return wrapper
+
+
+def needs_patches_server(test_fn, scheme='http', host='127.0.0.1', port=9002):
+    '''A function decorator that will assert that we can connect to the
+    Patches-Server before running a test.
+    '''
+
+    def wrapper(*args, **kwargs):
+        try:
+            resp = requests.get(f'{scheme}://{host}:{port}?platform=none')
+            if resp.json().get('error', None) is not None:
+                return test_fn(*args, **kwargs)
+            
+            return None
+        except Exception:
+            return None

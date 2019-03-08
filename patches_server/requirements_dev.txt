@@ -10,6 +10,7 @@ twine==1.12.1
 
 flask==1.0.2
 requests==2.21.0
+redis==3.2.0
 
 pytest==3.8.2
 pytest-runner==4.2
