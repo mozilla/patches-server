@@ -23,12 +23,21 @@ services:
       - ./clair:/config
     command: [-config, /config/config.yaml]
 
+  redis:
+    container_name: redis_redis
+    image: redis:5-alpine
+    restart: unless-stopped
+    expose:
+      - "6379"
+
   patches:
     container_name: patches_server
     image: mozilla/patches-server-dev:latest
     depends_on:
+      - redis
       - clair
     links:
+      - redis
       - clair
     ports:
       - "9002:9002"

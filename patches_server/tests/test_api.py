@@ -12,4 +12,4 @@ def client():
 
 def test_hello(client):
     response = client.get('/').json
-    assert response.get('greeting') == 'Hello, world!'
+    assert response.get('hits') > 0
