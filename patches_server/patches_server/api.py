@@ -2,7 +2,7 @@ import os
 
 from flask import Flask, request
 
-import config
+DEFAULT_CONFIG_FILE = 'patches-server/patches_server/config/default.py'
 
 
 api = Flask('patches-server')
@@ -22,7 +22,7 @@ def root():
 
 if __name__ == '__main__':
     if os.environ.get('CONFIG_FILE', None) is None:
-        os.environ['CONFIG_FILE'] = 'patches_server/config/default.py'
+        os.environ['CONFIG_FILE'] = DEFAULT_CONFIG_FILE
 
     api.config.from_object('config.default')
     api.config.from_envvar('CONFIG_FILE')

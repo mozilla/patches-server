@@ -32,4 +32,4 @@ services:
       - clair
     ports:
       - "9002:9002"
-    command: [python, patches_server/main.py]
+    command: [python, patches_server/api.py]
