@@ -1,4 +1,6 @@
-'''
+'''Defines an abstract base class called State that is implemented
+by datastructures that we need to persist and reload to and from
+an external medium.
 '''
 
 
