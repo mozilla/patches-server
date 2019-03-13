@@ -167,7 +167,12 @@ class SessionRegistry(State):
             if state_str is None:
                 continue
 
-            registry[session_id] = SessionState.from_json(str(state_str))
+            state = SessionState.from_json(str(state_str))
+
+            if state is None:
+                continue
+
+            registry[session_id] = state
 
         self.max_active_sessions = max_active
 
@@ -195,7 +200,7 @@ class SessionRegistry(State):
         ServerState if it exists, or else None.
         '''
 
-        if session_id not in self._registry:
+        if self._registry.get(session_id, None) is None:
             return None
 
         state = self._registry[session_id]

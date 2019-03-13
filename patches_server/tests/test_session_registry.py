@@ -1,3 +1,4 @@
+from datetime import datetime
 import time
 from unittest.mock import MagicMock, Mock
 
@@ -35,6 +36,42 @@ def test_persist_failure_case():
 
     registry.persist(mock_redis)
     mock_redis.hset.assert_called_once()
+
+
+def test_rebuild_success_case():
+    mock_redis = MagicMock()
+
+    test_ids = [ 'test1' ]
+
+    test_session = SessionState(
+        'ubuntu:18.04',
+        ActivityState.ACTIVE,
+        datetime.utcnow(),
+        datetime.utcnow(),
+        12
+    ).to_json()
+
+    mock_redis.get = Mock(return_value=None)
+    mock_redis.hkeys = Mock(return_value=test_ids)
+    mock_redis.hget = Mock(return_value=test_session)
+
+    registry = SessionRegistry(1, 3).rebuild(mock_redis)
+
+    mock_redis.get.assert_called_with('session_registry_max_queued_sessions')
+    mock_redis.hkeys.assert_called_once()
+    mock_redis.hget.asset_called_once_with('session_registry', 'test1')
+
+    assert registry.lookup('test1') is not None
+
+
+def test_rebuild_failure_case():
+    mock_redis = MagicMock()
+
+    mock_redis.get = Mock(side_effects=Exception('not found'))
+
+    registry = SessionRegistry(1, 3).rebuild(mock_redis)
+
+    assert registry.lookup('test1') is None
 
 
 def test_timed_out():
