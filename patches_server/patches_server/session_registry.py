@@ -135,8 +135,6 @@ class SessionRegistry(State):
                 'session_registry_max_queued_sessions',
                 self.max_queued_sessions)
 
-            print('SessionRegistry.persist called with registry')
-            print(self._registry)
             for session_id, session_state in self._registry.items():
                 redis.hset(
                     'session_registry',
