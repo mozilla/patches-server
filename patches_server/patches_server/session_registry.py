@@ -4,7 +4,7 @@ from enum import Enum
 import json
 from typing import Dict
 
-from patches_server.persist import State
+from persist import State
 
 
 class ActivityState(Enum):

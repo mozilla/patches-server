@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 
-from patches_server.session_registry import\
+from session_registry import\
     ActivityState, SessionRegistry, SessionState
 
 
