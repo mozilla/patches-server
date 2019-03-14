@@ -151,16 +151,16 @@ class SessionRegistry(State):
         '''Reconstruct the registry state from Redis.
         '''
 
-        max_active = redis.get('session_registry_max_active_sessions') or 128
+        max_active = int(redis.get('session_registry_max_active_sessions') or 128)
         
-        max_queued = redis.get('session_registry_max_queued_sessions') or 1024
+        max_queued = int(redis.get('session_registry_max_queued_sessions') or 1024)
 
-        session_ids = redis.hkeys('session_registry')
+        session_ids = [ str(key) for key in redis.hkeys('session_registry') ]
 
         registry = {}
 
         for session_id in session_ids:
-            state_str = redis.hget('session_registry', session_id)
+            state_str = str(redis.hget('session_registry', session_id))
 
             if state_str is None:
                 continue

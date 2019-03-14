@@ -1,8 +1,11 @@
 import json
 import os
+import sys
 
 from flask import Flask, g, request
 from redis import Redis
+
+from session_registry import SessionRegistry
 
 
 DEFAULT_CONFIG_FILE = 'patches-server/patches_server/config/default.py'
@@ -21,61 +24,85 @@ def root():
     '''
     '''
 
-    redis = connect_redis()
+    state = app_state()
 
-    hits = redis.get('hits')
+    test_id = 'test_session'
 
-    if hits is None:
-        hits = 1
+    session = state.lookup(test_id)
+
+    if session is not None:
+        print('Session already queued', file=sys.stderr)
     else:
-        hits = int(hits) + 1
+        print('Queueing a new session', file=sys.stderr)
+        state.queue(test_id, 'platform')
 
-    redis.set('hits', hits)
+    body = json.dumps({ 'session': test_id })
 
-    body = json.dumps({
-        'hits': int(hits)
-    })
-
-    print(f'Sending body {body}')
+    print(f'Sending body {body}', file=sys.stderr)
 
     headers = { 'Content-Type': 'application/json' }
 
     return ( body, 200, headers )
 
 
-def connect_redis(**kwargs):
-    '''Create a connection to a Redis server.
+def connect_redis():
+    '''Obtain a Redis connection.
     '''
-  
+
+    password = api.config.get('REDIS_PASSWORD', None)
+
+    arguments = {
+        'host': api.config['REDIS_HOST'],
+        'port': api.config['REDIS_PORT'],
+        'password': password
+    }
+
+    return Redis(**arguments)
+
+
+def app_state():
+    '''Obtain the current application state.
+    '''
+    
+    state = getattr(g, 'application_state', None)
+
+    if state is not None:
+        return state
+
     conn = getattr(g, 'redis_connection', None)
 
     if conn is None:
-        password = kwargs.get(
-            'password',
-            api.config.get('REDIS_PASSWORD', None))
+        g.redis_connection = conn = connect_redis()
 
-        arguments = {
-            'host': kwargs.get('host', api.config['REDIS_HOST']),
-            'port': kwargs.get('port', api.config['REDIS_PORT']),
-            'password': password
-        }
+    print('Reconstructing app state', file=sys.stderr)
 
-        g.redis_connection = conn = Redis(**arguments)
+    g.application_state = state = SessionRegistry(0, 0).rebuild(conn)
 
-    return conn
+    return state
+
 
 
 @api.teardown_appcontext
-def disconnect_redis(_error=None):
-    '''
+def persist_app_state(_error=None):
+    '''Persist the latest copy of the application state to Redis.
     '''
 
+    state = getattr(g, 'application_state', None)
+
+    if state is None:
+        return None
+    
     conn = getattr(g, 'redis_connection', None)
 
     if conn is None:
-        return
+        conn = connect_redis()
+
+    print('Persisting app state', file=sys.stderr)
+    result = state.persist(conn)
 
     conn.connection_pool.disconnect()
+
+    return result
 
 
 if __name__ == '__main__':
