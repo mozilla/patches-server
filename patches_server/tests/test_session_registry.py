@@ -28,7 +28,7 @@ def test_persist_failure_case():
     mock_redis = MagicMock()
 
     mock_redis.set = Mock(return_value=1)
-    mock_redis.hset = Mock(side_effect=Exception('test'))
+    mock_redis.hset = Mock(side_effects=Exception('test'))
 
     registry = SessionRegistry(1, 3)
 
