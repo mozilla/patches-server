@@ -5,3 +5,4 @@ authors = ["Emma Rose <emrose@mozilla.com>"]
 edition = "2018"
 
 [dependencies]
+actix-web = "^0.7"

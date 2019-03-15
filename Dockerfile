@@ -1,12 +1,11 @@
-FROM python:3.7.2-alpine3.8
+FROM rust:latest
 
 EXPOSE 9002
 WORKDIR /patches_server
 
-COPY ./patches_server/requirements_dev.txt /patches_server
+COPY ./Cargo.toml /patches_server
+COPY ./Cargo.lock /patches_server
 
-RUN pip install -r /patches_server/requirements_dev.txt
+RUN cargo install
 
-ENV CONFIG_FILE /patches_server/patches_server/config/default.py
-
-COPY ./patches_server /patches_server
+COPY ./patches_server/src /patches_server/src
