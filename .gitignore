@@ -8,3 +8,11 @@ erl_crash.dump
 *.beam
 /config/*.secret.exs
 *.swp
+
+
+#Added by cargo
+#
+#already existing elements are commented out
+
+/target
+**/*.rs.bk
