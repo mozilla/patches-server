@@ -1,12 +1,31 @@
-use actix_web::{server, App, Path, Responder};
+#[macro_use] extern crate serde_derive;
 
-fn index(_path: Path<()>) -> impl Responder {
-  format!("Hello, world!")
+use actix_web::{http, server, App, Query, Responder};
+
+
+#[derive(Deserialize)]
+struct SessionRequest {
+  platform: String,
+}
+
+#[derive(Deserialize)]
+struct VulnsRequest {
+  session: String,
+}
+
+fn session(query: Query<SessionRequest>) -> String {
+  format!("New session created for scanner on {}", query.platform)
+}
+
+fn vulnerabilities(query: Query<VulnsRequest>) -> String {
+  format!("Fetching vulns for session {}", query.session)
 }
 
 fn main() {
   let server = server::new(|| {
-    App::new().resource("/", |r| r.with(index))
+    App::new()
+      .resource("/vulnerabilities", |r| r.method(http::Method::GET).with(session))
+      .resource("/vulnerabilities/poll", |r| r.method(http::Method::GET).with(vulnerabilities))
   });
     
   server
