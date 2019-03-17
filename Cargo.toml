@@ -5,6 +5,7 @@ authors = ["Emma Rose <emrose@mozilla.com>"]
 edition = "2018"
 
 [dependencies]
+actix-redis = "^0.5"
 actix-web = "^0.7"
 serde = "^1.0"
 serde_derive = "^1.0"

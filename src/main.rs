@@ -1,8 +1,13 @@
 #[macro_use] extern crate serde_derive;
 
+mod persist;
+
 use std::sync::{Arc, Mutex};
 
+use actix_redis::RedisActor;
 use actix_web::{http, server, App, State, Query, Responder};
+
+use persist::{Persistent, Redis};
 
 
 #[derive(Clone)]
@@ -50,4 +55,14 @@ fn main() {
     .bind("127.0.0.1:9002")
     .unwrap()
     .run();
+}
+
+impl Persist<Addr<RedisActor>> for AppState {
+  type Error = {};
+
+  fn persist(&self, redis_actor: &Addr<RedisActor>) -> Result<(), ()> {
+  }
+
+  fn rebuild(redis_actor: &Addr<RedisActor>) -> Result<AppState, ()> {
+  }
 }
