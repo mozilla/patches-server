@@ -5,9 +5,9 @@ serving those scanners with active sessions a complete list of vulnerabilities
 from one or more sources.
 
 This document describes the function of the Patches-Server with reference to
-its [architecture diagram](./Patches-Server-Architecture.png)
+its [architecture diagram](docs/Patches-Server-Architecture.png)
 
-![Architecture Diagram](./Patches-Server-Architecture.png)
+![Architecture Diagram](docs/Patches-Server-Architecture.png)
 
 ## Component Definitions
 
